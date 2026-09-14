@@ -1,0 +1,1 @@
+This is a SANOVIO Case Study to show my appraoch to a business challenge of SANOVIO's
