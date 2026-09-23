@@ -1,6 +1,6 @@
 # SANOVIO — Procurement Platform MVP
 
-A working implementation of [SANOVIO Plattformstruktur.md](SANOVIO%20Plattformstruktur.md) (structure v2):
+An implementation of SANOVIOs Case Study:
 hospital and supplier data in, harmonised product identity in the middle, pooled orders out.
 
 ## Try it — the demo in four steps
@@ -151,7 +151,9 @@ SANOVIO is a **virtual procurement group**. Three mechanics stack, and each is a
    `CanonicalProduct`. Without this, nothing else is possible.
 2. **Pooling** — once two hospitals provably buy the same thing, their volume bundles into one
    negotiating position. Price is a function of the *pool*, not of one hospital's order. The
-   mechanic is real and priced; it is simply not exposed in either portal (see above).
+   mechanic is real and priced; it is simply not exposed in either portal (see above). A pool holds
+   only volume an approved order put there — nothing is pre-filled, so until a second hospital
+   orders, a pool is one hospital's volume and prices exactly as that.
 3. **Direct sourcing** — pooled volume is placed with the original manufacturer, removing the
    distributor margin. SANOVIO is principal, so orders carry a `sanovio_fulfillment_ref`, never a
    supplier reference.
@@ -232,8 +234,6 @@ rather than in the catalogue.
   counts them and is where a manufacturer sets what a product costs (see below). Every tier
   traces to `origin='catalogue'` (stated in the uploaded file) or `origin='supplier'` (typed by a
   human), and `npm run verify` asserts there is no third kind.
-- **Peer-hospital volumes**, generated deterministically and sized against each product's own first
-  volume break, so a pool sits plausibly near a tier instead of absurdly past it.
 - **Everything in `samples/`** except the three case-study files, which are real.
 - Hospital names are fictional.
 

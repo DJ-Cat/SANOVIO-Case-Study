@@ -304,6 +304,14 @@ async function main() {
 
     // ------------------------------------------------ §5 approval chain + pool
     section("§5 — approval chain and pooling");
+    // Pools hold only what an approved order put there: no generated volume
+    // from hospitals that never uploaded anything.
+    const unbacked = row<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM pooled_demand pd WHERE NOT EXISTS (
+         SELECT 1 FROM orders o WHERE o.demand_pool_id = pd.demand_pool_id
+           AND o.hospital_id = pd.hospital_id
+           AND o.status IN ('pooled','sanovio_fulfillment','fulfilled'))`)?.n ?? 0;
+    check("no pool holds volume that no approved order put there", unbacked === 0, `${unbacked} line(s)`);
     if (ord && ord.status === "pending_clinical") {
       await w.clinicalSignOff(ord.id);
       const s = row<{ status: string; clinical_approver_id: string }>(

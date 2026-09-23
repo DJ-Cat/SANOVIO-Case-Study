@@ -114,7 +114,6 @@ function promoteConfirmedSupplierItem(itemId: string) {
       price: item.extracted_price ?? 0,
     },
   }]);
-  seedPeerDemandForNewPools();
 }
 
 /** Correct a field on a low-confidence extraction, then re-run matching. */
@@ -394,7 +393,6 @@ export async function uploadSupplierCatalogue(formData: FormData): Promise<Uploa
   try {
     const res = await ingestSupplierCatalogue(
       supplierId, userId ?? "", file.name, file.type || "application/pdf", bytes);
-    seedPeerDemandForNewPools();
     await regenerate();
     const images = res.images ? `, ${res.images} product image(s) recovered` : "";
     return {
@@ -408,51 +406,6 @@ export async function uploadSupplierCatalogue(formData: FormData): Promise<Uploa
 }
 
 /** Set a real base price for a product; regenerates its volume ladder. */
-/**
- * Give every pool without peer volume a deterministic set of peer hospitals.
- * A buying group with one member is not a buying group; without this the
- * pooling mechanic has nothing to demonstrate.
- */
-export function seedPeerDemandForNewPools() {
-  const conn = db();
-  const peers = rows<{ id: string }>(
-    `SELECT id FROM organizations WHERE type='hospital' AND id != ?`, HOSPITAL_ID);
-  if (!peers.length) return;
-
-  const empty = rows<{ id: string; canonical_product_id: string; tier_step: number }>(
-    `SELECT dp.id, dp.canonical_product_id,
-            COALESCE((SELECT MIN(min_volume) FROM price_tiers t
-                      WHERE t.canonical_product_id = dp.canonical_product_id
-                        AND t.supplier_id = dp.supplier_id AND t.min_volume > 0), 250000) AS tier_step
-     FROM demand_pools dp
-     WHERE NOT EXISTS (SELECT 1 FROM pooled_demand pd WHERE pd.demand_pool_id = dp.id)`);
-
-  const ins = conn.prepare(
-    `INSERT INTO pooled_demand (id,demand_pool_id,hospital_id,annual_volume,commitment,committed_at)
-     VALUES (?,?,?,?,?,?)`);
-  tx(() => {
-    for (const pool of empty) {
-      const h = hashStr(pool.canonical_product_id);
-      // Peer volume is sized against the product's own first volume break, so
-      // a pool is plausibly near a tier rather than absurdly past or short of it.
-      const step = pool.tier_step || 250_000;
-      peers.forEach((peer, i) => {
-        if ((h >> i) % 3 === 0) return;
-        const vol = Math.max(1, Math.round(step * (0.16 + ((h >> (i * 3)) % 26) * 0.015)));
-        const committed = (h >> i) % 2 === 0;
-        ins.run(id("pd"), pool.id, peer.id, vol, committed ? "committed" : "indicative",
-          committed ? nowIso() : null);
-      });
-    }
-  });
-}
-
-function hashStr(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return Math.abs(h);
-}
-
 /**
  * Remove canonical products and everything derived from them.
  *

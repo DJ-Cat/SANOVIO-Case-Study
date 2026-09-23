@@ -66,6 +66,15 @@ function migrate(conn: DatabaseSync): void {
   }
   // Superseded by the suggestion pipeline's match_pairs; its rows were derived.
   conn.exec(`DROP TABLE IF EXISTS product_equivalences`);
+  // Pools used to be pre-filled with generated volume from peer hospitals,
+  // which nobody uploaded — and which could price an offer at a tier only the
+  // invented volume reached. A pool now holds only what an approved order put
+  // there; any other line in it was generated, and goes.
+  conn.exec(`DELETE FROM pooled_demand WHERE NOT EXISTS (
+    SELECT 1 FROM orders o
+    WHERE o.demand_pool_id = pooled_demand.demand_pool_id
+      AND o.hospital_id = pooled_demand.hospital_id
+      AND o.status IN ('pooled','sanovio_fulfillment','fulfilled'))`);
   rebuildRecommendations(conn, schema, has);
   if (!has("hospital_purchase_items", "embedding")) {
     conn.exec(`ALTER TABLE hospital_purchase_items ADD COLUMN embedding BLOB`);

@@ -15,7 +15,7 @@ import type {
   Catalog, RunReport, ManifestFigure, ExtractOutput,
 } from "../lib/ingest/extract-lib.ts";
 import { indexFigures } from "../lib/ingest/extract-lib.ts";
-import { seedPeerDemandForNewPools, rerunPipeline } from "../lib/workflow.ts";
+import { rerunPipeline } from "../lib/workflow.ts";
 import { row } from "../lib/db.ts";
 import { HOSPITAL_ID, BUYER } from "../lib/constants.ts";
 
@@ -76,7 +76,6 @@ async function main() {
   // the only documented way back was to re-upload by hand.
   const demand = await loadDemand();
 
-  seedPeerDemandForNewPools();
   await rerunPipeline();
 
   const pngs = readdirSync(path.join(dir, "assets")).filter((f) => f.endsWith(".png")).length;
