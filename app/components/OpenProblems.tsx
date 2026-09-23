@@ -3,6 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { reviewProductAction, clearProblemAction, sendProblemAction } from "@/lib/actions";
 import type { ComparisonResult, OpenProblem } from "@/lib/workflow";
+import { Stamp, RevMark, Mark, Balloon } from "./marks";
+import { buttonClass, DIALOG } from "./controls";
 
 /**
  * The Open problems tab.
@@ -31,7 +33,7 @@ export function OpenProblems({ itemId, canonicalId, itemName, productName }: {
 
   if (running && !result) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <div className="panel flex flex-col items-center gap-3 py-14 text-center">
         <Spinner />
         <p className="text-sm font-medium text-ink-600 dark:text-ink-200">
           Comparing against {itemName}
@@ -46,12 +48,13 @@ export function OpenProblems({ itemId, canonicalId, itemName, productName }: {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
-        <div className="font-medium">The comparison could not be run.</div>
-        <div className="mt-0.5 text-xs opacity-80">{error}</div>
-        <button onClick={() => run(true)} className="mt-2 text-xs font-semibold underline">
-          Try again
-        </button>
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-rose-50 px-5 py-3.5 text-sm shadow-[0_0_0_1px_rgb(244_63_94/0.18)] dark:bg-rose-500/10">
+        <Stamp tone="danger">Not run</Stamp>
+        <div className="min-w-0 flex-1 text-ink-700 dark:text-ink-100">
+          The comparison could not be run.
+          <span className="block text-xs text-ink-400">{error}</span>
+        </div>
+        <button onClick={() => run(true)} className={buttonClass("ghost", "sm")}>Try again</button>
       </div>
     );
   }
@@ -61,49 +64,68 @@ export function OpenProblems({ itemId, canonicalId, itemName, productName }: {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-ink-50 bg-white/70 px-4 py-3 dark:border-ink-800 dark:bg-ink-900/60">
-        <p className="text-sm text-ink-700 dark:text-ink-100">{result?.summary}</p>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-400">
-          <span className="font-medium uppercase tracking-wide">{result?.relation.replace("_", " ")}</span>
-          <span>·</span><span className="tnum">{result?.confidence}% confidence</span>
-          <span>·</span><span>{result?.adapter}</span>
-          {running && <span className="ml-1 inline-flex items-center gap-1.5"><Spinner small /> re-running</span>}
-          <button onClick={() => run(true)} disabled={running}
-            className="ml-auto font-semibold text-brand-600 underline disabled:opacity-40 dark:text-brand-300">
-            Run again
-          </button>
-        </p>
+      <div className="card overflow-hidden">
+        <p className="px-5 py-4 text-sm leading-relaxed text-ink-700 dark:text-ink-100">{result?.summary}</p>
+        <div className="flex flex-wrap items-stretch gap-y-1 border-t hair px-2 py-1.5 text-[12px] text-ink-700 dark:text-ink-100">
+          <Cell label="Relation"><span className="capitalize">{result?.relation.replace("_", " ")}</span></Cell>
+          <Cell label="Confidence"><span className="tnum">{result?.confidence} %</span></Cell>
+          <Cell label="Analysed by">{result?.adapter}</Cell>
+          <span className="ml-auto flex items-center gap-2 px-3 py-2">
+            {running && <span className="inline-flex items-center gap-1.5 text-[11px] text-ink-400"><Spinner small /> re-running</span>}
+            <button onClick={() => run(true)} disabled={running} className={buttonClass("ghost", "sm")}>Run again</button>
+          </span>
+        </div>
       </div>
 
       {problems.length === 0 ? (
-        <div className="rounded-xl border border-good-100 bg-good-100/25 px-4 py-6 text-center text-sm text-good-500 dark:border-good-500/40 dark:bg-good-500/10 dark:text-good-100">
-          Nothing outstanding. Every attribute the platform holds for both articles agrees.
+        <div className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50/70 px-4 py-7 text-sm font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
+          <Mark kind="done" className="h-3.5 w-3.5" /> Nothing outstanding. Every attribute the platform holds for both articles agrees.
         </div>
       ) : (
-        <>
+        <div className="card overflow-hidden">
           {blocking > 0 && (
-            <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
-              {blocking} blocking — this substitution cannot be ordered until they are resolved.
+            <p className="flex items-center gap-2 border-b hair bg-rose-50/60 px-5 py-3 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
+              <Stamp tone="solid-danger">{blocking} blocking</Stamp>
+              This substitution cannot be ordered until they are resolved.
             </p>
           )}
-          <ul className="space-y-2.5">
-            {problems.map((p) => (
-              <Problem key={p.id} p={p} productName={productName}
+          <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_8.5rem] gap-x-4 border-b hair px-5 py-3 md:grid">
+            <span className="label">#</span><span className="label">Point</span>
+            <span className="label">Status</span>
+          </div>
+          <ol className="divide-y divide-[var(--line)]">
+            {problems.map((p, i) => (
+              <Problem key={p.id} n={i + 1} p={p} productName={productName}
                 onDone={() => startTransition(() => run(false))} />
             ))}
-          </ul>
-        </>
+          </ol>
+        </div>
       )}
     </div>
   );
 }
 
-function Problem({ p, productName, onDone }: {
-  p: OpenProblem; productName: string; onDone: () => void;
+function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <span className="px-3 py-1.5">
+      <span className="label block text-[11px]">{label}</span>
+      <span className="mt-0.5 block">{children}</span>
+    </span>
+  );
+}
+
+/** One point: its number, what it says, where it stands, and what can be done with it. */
+function Problem({ n, p, productName, onDone }: {
+  n: number; p: OpenProblem; productName: string; onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const answered = p.status === "answered";
+  const blocking = p.type === "blocking" && !answered;
+  const ph = answered ? { word: "Answered", tone: "brand" as const }
+    : p.sentAt ? { word: "With manufacturer", tone: "brand" as const }
+    : blocking ? { word: "Blocking", tone: "danger" as const }
+    : { word: "Open", tone: "neutral" as const };
 
   const act = (fn: (id: string) => Promise<void>) => {
     setBusy(true);
@@ -111,53 +133,36 @@ function Problem({ p, productName, onDone }: {
   };
 
   return (
-    <li className={`rounded-2xl border p-4 ${
-      p.type === "blocking"
-        ? "border-rose-200 bg-rose-50/50 dark:border-rose-900/70 dark:bg-rose-950/20"
-        : "border-ink-100 bg-white/70 dark:border-ink-800 dark:bg-ink-900/60"}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              p.type === "blocking"
-                ? "bg-rose-600 text-white"
-                : "bg-ink-100 text-ink-600 dark:bg-ink-700 dark:text-ink-200"}`}>
-              {p.type === "blocking" ? "Blocking" : "For information"}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-ink-400">
-              {p.routedTo === "supplier" ? "manufacturer can answer" : "SANOVIO to resolve"}
-            </span>
-            {p.sentAt && (
-              <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
-                sent
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-ink-800 dark:text-ink-100">{p.text}</p>
-          {answered && p.answerText && (
-            <p className="mt-2 rounded-lg bg-good-100/40 px-3 py-2 text-sm text-good-500 dark:bg-good-500/10 dark:text-good-100">
-              <span className="font-semibold">Answered: </span>{p.answerText}
-            </p>
-          )}
-        </div>
-
-        {!answered && (
-          <div className="flex shrink-0 gap-2 sm:flex-col sm:gap-1.5">
-            <button onClick={() => setConfirming(true)} disabled={busy}
-              className="flex-1 rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 sm:flex-none dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
-              Cleared
-            </button>
-            <button onClick={() => act(sendProblemAction)} disabled={busy || Boolean(p.sentAt) || p.routedTo !== "supplier"}
-              title={p.routedTo !== "supplier" ? "Only SANOVIO can resolve this one" : undefined}
-              className="flex-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40 sm:flex-none">
-              {p.sentAt ? "Sent" : "Send to supplier"}
-            </button>
+    <li className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 px-5 py-4 md:grid-cols-[2.5rem_minmax(0,1fr)_8.5rem] md:items-start`}>
+      <span className="pt-0.5"><Balloon n={n} blocking={blocking} /></span>
+      <div className="min-w-0">
+        <p className="text-sm leading-relaxed text-ink-800 dark:text-ink-100">{p.text}</p>
+        <p className="mt-1 label">{p.routedTo === "supplier" ? "Manufacturer can answer" : "SANOVIO to resolve"}</p>
+        {answered && p.answerText && (
+          <div className="mt-2.5 rounded-xl bg-brand-50/70 px-3.5 py-2.5 text-sm leading-relaxed text-ink-700 dark:bg-brand-500/10 dark:text-ink-100">
+            <span className="mr-1.5 font-bold text-brand-700 dark:text-brand-200">Answer</span>{p.answerText}
           </div>
         )}
+        <div className="mt-2 md:hidden"><Stamp tone={ph.tone}>{ph.word}</Stamp></div>
       </div>
+      <span className="hidden pt-0.5 md:block"><Stamp tone={ph.tone}>{ph.word}</Stamp></span>
+
+      {!answered ? (
+        <div className="col-start-2 flex flex-wrap gap-2">
+          <button onClick={() => setConfirming(true)} disabled={busy} className={buttonClass("ghost", "sm")}>
+            Cleared
+          </button>
+          <button onClick={() => act(sendProblemAction)} disabled={busy || Boolean(p.sentAt) || p.routedTo !== "supplier"}
+            title={p.routedTo !== "supplier" ? "Only SANOVIO can resolve this one" : undefined}
+            className={buttonClass("ghost", "sm")}>
+            {p.sentAt ? "Sent" : "Send to supplier"}
+          </button>
+        </div>
+      ) : null}
 
       {confirming && (
         <Confirm
+          n={n}
           question={p.text}
           blocking={p.type === "blocking"}
           productName={productName}
@@ -169,36 +174,33 @@ function Problem({ p, productName, onDone }: {
   );
 }
 
-function Confirm({ question, blocking, productName, busy, onCancel, onConfirm }: {
-  question: string; blocking: boolean; productName: string; busy: boolean;
+function Confirm({ n, question, blocking, productName, busy, onCancel, onConfirm }: {
+  n: number; question: string; blocking: boolean; productName: string; busy: boolean;
   onCancel: () => void; onConfirm: () => void;
 }) {
   return (
-    <div role="dialog" aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-ink-950/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-ink-100 bg-white p-6 shadow-xl dark:border-ink-700 dark:bg-ink-900">
-        <h2 className="text-base font-semibold text-ink-950 dark:text-white">
+    <div role="dialog" aria-modal="true" aria-label="Clear this question?" className={DIALOG.scrim}>
+      <div className={DIALOG.panel}>
+        <h2 className={`${DIALOG.head} text-base font-semibold text-ink-950 dark:text-white`}>
           Clear this question?
         </h2>
-        <p className="mt-2 text-sm text-ink-500 dark:text-ink-300">
-          You are recording that it does not apply to {productName}. It leaves your worklist and
-          is not sent to the manufacturer.
-        </p>
-        <p className="mt-3 rounded-lg bg-ink-25 px-3 py-2 text-xs leading-relaxed text-ink-600 dark:bg-ink-800 dark:text-ink-200">
-          {question}
-        </p>
-        {blocking && (
-          <p className="mt-3 text-xs font-semibold text-rose-700 dark:text-rose-300">
-            This one is blocking. Clearing it removes the barrier to ordering.
+        <div className={DIALOG.body}>
+          <p>
+            You are recording that it does not apply to {productName}. It leaves your worklist and
+            is not sent to the manufacturer.
           </p>
-        )}
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onCancel} disabled={busy}
-            className="rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
-            Keep it
-          </button>
-          <button onClick={onConfirm} disabled={busy}
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-40">
+          <p className="mt-3 flex gap-2.5 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2 text-xs leading-relaxed text-ink-700 dark:text-ink-100">
+            <Balloon n={n} blocking={blocking} /><span>{question}</span>
+          </p>
+          {blocking && (
+            <p className="mt-3 text-xs font-semibold text-rose-700 dark:text-rose-300">
+              This one is blocking. Clearing it removes the barrier to ordering.
+            </p>
+          )}
+        </div>
+        <div className={DIALOG.foot}>
+          <button onClick={onCancel} disabled={busy} className={buttonClass("ghost")}>Keep it</button>
+          <button onClick={onConfirm} disabled={busy} className={`${buttonClass("primary")} !bg-rose-600 hover:!bg-rose-700`}>
             {busy ? "Clearing…" : "Yes, clear it"}
           </button>
         </div>

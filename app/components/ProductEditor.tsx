@@ -64,7 +64,7 @@ function Pictures({ canonicalId, images }: { canonicalId: string; images: Produc
 
   return (
     <div className="card space-y-3 p-4">
-      <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-xl border border-ink-50 bg-white dark:border-ink-700 dark:bg-ink-800">
+      <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-glow)] dark:bg-ink-800">
         {shot ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={`/api/product-images/${shot.id}`} alt=""
@@ -80,7 +80,7 @@ function Pictures({ canonicalId, images }: { canonicalId: string; images: Produc
             <li key={img.id} className="flex items-center gap-2 text-[11px] text-ink-400">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/api/product-images/${img.id}`} alt=""
-                className="h-8 w-8 shrink-0 rounded border border-ink-50 bg-white object-contain p-0.5 dark:border-ink-700 dark:bg-ink-800" />
+                className="h-8 w-8 shrink-0 rounded-lg border hair bg-white object-contain p-0.5 dark:border-ink-700 dark:bg-ink-800" />
               <span className="min-w-0 flex-1 truncate">
                 {i === 0 && <span className="font-medium text-ink-500 dark:text-ink-300">shown · </span>}
                 {img.confidence === "certain"
@@ -89,7 +89,7 @@ function Pictures({ canonicalId, images }: { canonicalId: string; images: Produc
               </span>
               <form action={removeProductImage.bind(null, img.id)} className="shrink-0">
                 <button title="Remove this picture"
-                  className="rounded p-1 text-ink-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40">
+                  className="rounded-lg p-1 text-ink-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10">
                   <Trash className="h-3.5 w-3.5" />
                 </button>
               </form>
@@ -100,7 +100,7 @@ function Pictures({ canonicalId, images }: { canonicalId: string; images: Produc
 
       <form action={action} className="space-y-2 border-t border-ink-50 pt-3 dark:border-ink-800">
         <input type="hidden" name="canonicalId" value={canonicalId} />
-        <label className="block cursor-pointer rounded-lg border border-dashed border-ink-100 px-3 py-2.5 text-center text-xs transition hover:border-brand-300 hover:bg-brand-50/40 dark:border-ink-700 dark:hover:border-brand-500/50">
+        <label className="block cursor-pointer rounded-xl border border-dashed border-ink-100 px-3 py-2.5 text-center text-xs transition hover:border-brand-300 hover:bg-ink-25/60 dark:border-ink-700 dark:hover:border-brand-500/50">
           <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif"
             className="sr-only" disabled={pending}
             onChange={(e) => setChosen(e.currentTarget.files?.[0]?.name ?? null)} />
@@ -111,7 +111,7 @@ function Pictures({ canonicalId, images }: { canonicalId: string; images: Produc
         {/* A picture from the company that makes the article outranks one the
             extractor matched to a table, which is why it is worth offering. */}
         <button type="submit" disabled={pending}
-          className="w-full rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] transition-all hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] disabled:opacity-40 dark:bg-ink-900 dark:text-ink-100 px-3 py-1.5 text-xs">
           {pending ? "Uploading…" : "Upload picture"}
         </button>
         <Banner state={state} />
@@ -128,18 +128,18 @@ function DescriptionPanel({ canonicalId, description }: {
   return (
     <form action={action} className="card space-y-2 p-4">
       <input type="hidden" name="canonicalId" value={canonicalId} />
-      <label className="block text-xs font-semibold uppercase tracking-wide text-ink-400">
+      <label className="label block">
         Description
       </label>
       <textarea name="description" rows={5} defaultValue={description ?? ""} disabled={pending}
         placeholder="What this article is for, and anything a buyer should know before switching to it."
-        className="w-full resize-y rounded-lg border border-ink-200 px-3 py-2 text-sm disabled:opacity-50 dark:border-ink-600 dark:bg-ink-950" />
+        className="w-full resize-y rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-3 py-2 text-sm disabled:opacity-50" />
       <p className="text-[11px] text-ink-400">
         Shown to hospitals on the product page. Extraction never fills this in — a catalogue
         describes a family, not a size.
       </p>
       <button type="submit" disabled={pending}
-        className="w-full rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
+        className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] transition-all hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] disabled:opacity-40 dark:bg-ink-900 dark:text-ink-100 px-3 py-1.5 text-xs">
         {pending ? "Saving…" : "Save description"}
       </button>
       <Banner state={state} />

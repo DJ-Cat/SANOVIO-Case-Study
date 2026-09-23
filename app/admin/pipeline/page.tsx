@@ -1,4 +1,4 @@
-import { Page, Table, Stat, Empty, SubmitButton } from "@/app/components/ui";
+import { Page, Table, Stat, DataSheet, Empty, SubmitButton } from "@/app/components/ui";
 import {
   matchRuns, linkMethodBreakdown, hospitalLinkBreakdown, thresholds,
   suggestionRuns, pairLog, pairLogCounts, type SuggestionRun,
@@ -47,7 +47,7 @@ export default async function Pipeline(
         </form>
       }>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <DataSheet>
         <Stat label="Hospital lines matched" value={String(totalConfirmed)} sub="supplier self-declaration excluded" />
         <Stat label="Resolved by identifier" value={totalConfirmed ? `${Math.round((free / totalConfirmed) * 100)}%` : "—"}
           sub="zero marginal cost" />
@@ -55,20 +55,20 @@ export default async function Pipeline(
           sub={last ? `of ${last.items_seen} items seen` : ""} />
         <Stat label="Adapter" value={last ? (last.adapter.includes("claude") ? "live" : "stub") : "—"}
           sub={last?.adapter ?? ""} />
-      </div>
+      </DataSheet>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Thresholds in force (§2)</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Thresholds in force (§2)</h2>
         <Table head={["Gate", "Question it answers", "Bar"]}>
-          <tr><td className="px-3 py-2 font-mono text-xs">extraction_confidence</td>
+          <tr><td className="px-3 py-2 code text-xs">extraction_confidence</td>
             <td className="px-3 py-2">Did we read this row correctly?</td>
             <td className="px-3 py-2 tnum">{EXTRACTION_THRESHOLD}</td></tr>
-          <tr><td className="px-3 py-2 font-mono text-xs">link_confidence</td>
+          <tr><td className="px-3 py-2 code text-xs">link_confidence</td>
             <td className="px-3 py-2">Is this row the same article as this canonical product?</td>
             <td className="px-3 py-2 tnum">{LINK_THRESHOLD}</td></tr>
           {(["I", "IIa", "IIb", "III"] as const).map((c) => (
             <tr key={c}>
-              <td className="px-3 py-2 font-mono text-xs">substitution · MDR {c}</td>
+              <td className="px-3 py-2 code text-xs">substitution · MDR {c}</td>
               <td className="px-3 py-2">Are these different articles clinically interchangeable?</td>
               <td className="px-3 py-2 tnum">
                 {SUBSTITUTION_THRESHOLD[c] === null
@@ -81,7 +81,7 @@ export default async function Pipeline(
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Which layer resolved what</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Which layer resolved what</h2>
         <Table head={["Layer", "Confirmed", "Proposed (held for review)", "Rejected"]}>
           {Object.keys(METHOD_LABEL).map((m) => {
             const row = (st: string) => methods.find((x) => x.link_method === m && x.status === st)?.n ?? 0;
@@ -102,7 +102,7 @@ export default async function Pipeline(
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
+            <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
               Suggestion pipeline
             </h2>
             <p className="mt-1 max-w-3xl text-xs text-ink-400">
@@ -150,7 +150,7 @@ export default async function Pipeline(
       <section className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
+            <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
               Dropped and rejected pairs
             </h2>
             <p className="mt-1 max-w-3xl text-xs text-ink-400">
@@ -158,14 +158,18 @@ export default async function Pipeline(
               Stage 1 and 2 drops stop being recorded with <code>SUGGEST_LOG_DROPS=0</code>.
             </p>
           </div>
-          <nav className="flex flex-wrap gap-1.5 text-xs">
-            <a href="/admin/pipeline" className={`rounded-lg px-2.5 py-1 ${!stageFilter ? "bg-ink-900 text-white dark:bg-ink-50 dark:text-ink-900" : "text-ink-500 hover:bg-ink-25 dark:hover:bg-ink-800"}`}>All</a>
-            {logCounts.map((c) => (
-              <a key={c.stage} href={`/admin/pipeline?stage=${c.stage}`}
-                className={`rounded-lg px-2.5 py-1 tnum ${stageFilter === c.stage ? "bg-ink-900 text-white dark:bg-ink-50 dark:text-ink-900" : "text-ink-500 hover:bg-ink-25 dark:hover:bg-ink-800"}`}>
-                {STAGE_LABEL[c.stage] ?? c.stage} · {c.n}
-              </a>
-            ))}
+          {/* A segmented pill control, like the product views. */}
+          <nav className="inline-flex flex-wrap gap-1 rounded-xl bg-ink-50 p-1 text-xs dark:bg-ink-900" aria-label="Filter by stage">
+            {[{ href: "/admin/pipeline", label: "All", on: !stageFilter },
+              ...logCounts.map((c) => ({ href: `/admin/pipeline?stage=${c.stage}`, label: `${STAGE_LABEL[c.stage] ?? c.stage} · ${c.n}`, on: stageFilter === c.stage }))]
+              .map((f) => (
+                <a key={f.href} href={f.href} aria-current={f.on ? "true" : undefined}
+                  className={`rounded-lg px-3 py-1.5 tnum transition ${
+                    f.on ? "bg-white font-bold text-ink-950 shadow-[0_0_0_1px_rgb(87_89_242/0.10),0_2px_8px_-2px_rgb(40_42_120/0.18)] dark:bg-ink-800 dark:text-white"
+                      : "font-semibold text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-ink-50"}`}>
+                  {f.label}
+                </a>
+              ))}
           </nav>
         </div>
         {log.length === 0 ? <Empty>Nothing dropped yet.</Empty> : (
@@ -187,7 +191,7 @@ export default async function Pipeline(
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Run history</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Run history</h2>
         {runs.length === 0 ? <Empty>No runs recorded.</Empty> : (
           <Table head={["Started", "Items", "Identifier", "Reranker", "Claude", "To review", "LLM calls", "Adapter"]}>
             {runs.map((r) => (
@@ -199,7 +203,7 @@ export default async function Pipeline(
                 <td className="px-3 py-2 tnum">{r.by_llm}</td>
                 <td className="px-3 py-2 tnum text-amber-700 dark:text-amber-400">{r.to_review}</td>
                 <td className="px-3 py-2 tnum">{r.llm_calls}</td>
-                <td className="px-3 py-2 font-mono text-[11px] text-ink-400">{r.adapter}</td>
+                <td className="px-3 py-2 code text-[11px] text-ink-400">{r.adapter}</td>
               </tr>
             ))}
           </Table>
@@ -226,7 +230,7 @@ function Funnel({ run }: { run: SuggestionRun }) {
         <div key={label} className="grid grid-cols-[6rem_1fr_4rem] items-center gap-3 text-sm">
           <span className="text-ink-500 dark:text-ink-300">{label}</span>
           <div className="h-2 overflow-hidden rounded-full bg-ink-50 dark:bg-ink-800" title={sub}>
-            <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.max(n ? 0.6 : 0, (n / max) * 100)}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-brand-800 to-brand-400" style={{ width: `${Math.max(n ? 0.6 : 0, (n / max) * 100)}%` }} />
           </div>
           <span className="text-right tnum font-medium">{n}</span>
         </div>

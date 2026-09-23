@@ -18,7 +18,7 @@ export default function Documents() {
               </td>
               <td className="px-3 py-2.5 text-ink-500 dark:text-ink-300">{d.org_name}</td>
               <td className="px-3 py-2.5">
-                <span className="rounded bg-ink-50 px-1.5 py-0.5 text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
+                <span className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-ink-50 text-ink-600 dark:text-ink-200">
                   {d.kind === "hospital_demand" ? "hospital demand" : "supplier catalogue"}
                 </span>
               </td>

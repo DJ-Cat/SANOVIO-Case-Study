@@ -25,7 +25,7 @@ export function ReplaceWithThis({ canonicalId, productName, manufacturer, option
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_6px_14px_-6px_rgba(86,89,251,.6)] transition hover:bg-brand-600">
+        className="btn-gradient inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white">
         <SwapIcon /> Replace with this
       </button>
       {open && (
@@ -98,7 +98,7 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
   return createPortal((
     <div role="dialog" aria-modal="true" aria-labelledby={titleId}
       className="fixed inset-0 z-50 grid place-items-center bg-ink-950/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-ink-100 bg-white p-6 shadow-xl dark:border-ink-700 dark:bg-ink-900">
+      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-[var(--sheet)] p-6 shadow-[0_0_0_1px_rgb(87_89_242/0.12),0_30px_80px_-20px_rgb(40_42_120/0.45)]">
         {phase.kind === "ready" ? (
           <div className="flex flex-col items-center py-4 text-center" aria-live="polite">
             <h2 id={titleId} className="text-base font-semibold text-ink-950 dark:text-white">
@@ -110,7 +110,7 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
               points are ready to sign off or send.
             </p>
             <button onClick={() => finish(phase.itemId, "problems")}
-              className="mt-5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600">
+              className="mt-5 inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
               Review the points
             </button>
           </div>
@@ -129,7 +129,7 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
               The points it finds appear on this product page and in your catalogue as they land.
             </p>
             <button onClick={() => finish(phase.itemId)}
-              className="mt-5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600">
+              className="mt-5 inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
               Back to the product
             </button>
           </div>
@@ -143,7 +143,7 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
             </p>
 
             {options.length === 0 ? (
-              <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <p className="mt-4 rounded-xl bg-amber-50 shadow-[0_0_0_1px_rgb(245_158_11/0.25)] dark:bg-amber-500/10 px-3.5 py-2.5 text-sm text-amber-900 dark:text-amber-100">
                 Your catalogue is empty, so there is nothing to replace yet. Upload your article
                 master under{" "}
                 <Link href="/hospital/documents" className="font-semibold underline">Documents</Link> first.
@@ -151,12 +151,12 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
             ) : (
               <>
                 <label htmlFor={`${titleId}-line`}
-                  className="mt-5 block text-xs font-semibold uppercase tracking-wide text-ink-400">
+                  className="label mt-5 block">
                   Which article from your catalogue does it replace?
                 </label>
                 <select id={`${titleId}-line`} ref={selectRef} value={itemId} disabled={busy}
                   onChange={(e) => setItemId(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 disabled:opacity-50 dark:border-ink-600 dark:bg-ink-950 dark:text-ink-50">
+                  className="mt-1.5 w-full rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-3 py-2 text-sm text-ink-900 disabled:opacity-50 dark:text-ink-50">
                   <option value="" disabled>Choose an article…</option>
                   {options.map((o) => (
                     <option key={o.id} value={o.id}>
@@ -176,18 +176,18 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
             )}
 
             {error && (
-              <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
+              <p className="mt-3 rounded-xl bg-rose-50 shadow-[0_0_0_1px_rgb(244_63_94/0.22)] dark:bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-800 dark:text-rose-200">
                 {error}
               </p>
             )}
 
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={onClose} disabled={busy}
-                className="rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] transition-all hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] disabled:opacity-40 dark:bg-ink-900 dark:text-ink-100 px-4 py-2 text-sm">
                 Cancel
               </button>
               <button onClick={confirm} disabled={busy || !chosen}
-                className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40">
+                className="inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                 {busy ? "Confirming…" : "Confirm"}
               </button>
             </div>
@@ -210,7 +210,7 @@ function ChoiceNote({ option, canonicalId }: { option: ReplacementOption; canoni
   }
   if (current) {
     return (
-      <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      <p className="mt-2 rounded-xl bg-amber-50 shadow-[0_0_0_1px_rgb(245_158_11/0.25)] dark:bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-100">
         That line is already set to be replaced by <span className="font-semibold">{current.name}</span>.
         Confirming switches it to this product. Points you signed off or sent stay on record.
       </p>

@@ -1,11 +1,17 @@
 @import "tailwindcss";
 
-/* Palette taken from sanovio.de (brand blue #5659FB and its grey scale). */
+/*
+ * SANOVIO, as sanovio.de draws it: Manrope, white cards with rounded corners
+ * and a long, very soft shadow, a faint violet glow at the edges, lavender
+ * light pooling in the corners of panels, pill chips, and one gradient for
+ * the action that matters. Brand blue #5659FB and its grey scale are the
+ * site's own.
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-brand-50:  #eeeeff;
-  --color-brand-100: #cbccfe;
+  --color-brand-100: #dcdcfe;
   --color-brand-200: #b1b3fd;
   --color-brand-300: #8e90fc;
   --color-brand-400: #7173f4;
@@ -14,44 +20,144 @@
   --color-brand-700: #3d3fb2;
   --color-brand-800: #0e10d6;
 
-  --color-ink-25:  #fafafa;
-  --color-ink-50:  #eeeef0;
-  --color-ink-100: #c9cacf;
-  --color-ink-200: #afb0b8;
-  --color-ink-300: #8a8c97;
-  --color-ink-400: #747683;
-  --color-ink-500: #515464;
+  --color-ink-25:  #fafafb;
+  --color-ink-50:  #f1f1f4;
+  --color-ink-100: #dcdde3;
+  --color-ink-200: #b9bac3;
+  --color-ink-300: #8e909b;
+  --color-ink-400: #737582;
+  --color-ink-500: #5e5e6b;
   --color-ink-600: #4a4c5b;
   --color-ink-700: #3a3c47;
-  --color-ink-800: #2d2e37;
-  --color-ink-900: #22232a;
-  --color-ink-950: #0b0c0f;
+  --color-ink-800: #2a2b34;
+  --color-ink-900: #1c1d24;
+  --color-ink-950: #0d0e14;
 
   --color-good-500: #229f39;
   --color-good-100: #a8e6a3;
+
+  /* The site's shadow: five stacked layers, the deepest 170px down and
+     nearly transparent, so a card lifts without a visible edge. */
+  --shadow-soft: 0 1px 2px rgb(20 21 40 / 0.04), 0 6px 15px rgb(20 21 40 / 0.05), 0 27px 27px rgb(20 21 40 / 0.04), 0 60px 36px rgb(20 21 40 / 0.02);
+  --shadow-lift: 0 2px 4px rgb(20 21 40 / 0.05), 0 10px 24px rgb(20 21 40 / 0.07), 0 36px 40px rgb(20 21 40 / 0.05);
+  /* The violet glow around an edge: a 1px violet tint and a wide, low halo. */
+  --shadow-glow: 0 0 0 1px rgb(87 89 242 / 0.10), 0 8px 32px -8px rgb(87 89 242 / 0.28), 0 2px 6px rgb(20 21 40 / 0.04);
+  --shadow-glow-strong: 0 0 0 1px rgb(87 89 242 / 0.22), 0 10px 40px -6px rgb(87 89 242 / 0.40), 0 2px 6px rgb(20 21 40 / 0.05);
 }
 
-:root { color-scheme: light dark; }
+:root {
+  color-scheme: light dark;
+  /* Soft separators: a card edge and a stronger divider. */
+  --line: #ececf1;
+  --line-strong: #dfe0e7;
+  --sheet: #ffffff;
+  --ground: #f7f7fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --line: #23242d; --line-strong: #30313c; --sheet: #14151c; --ground: #0a0b10; }
+}
 html, body { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  background: #fbfbfd;
+  background: var(--ground);
   color: var(--color-ink-900);
-  font-feature-settings: "tnum" 1;
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: 15px;
+  line-height: 1.5;
 }
 @media (prefers-color-scheme: dark) {
-  body { background: #07080c; color: var(--color-ink-50); }
+  body { color: var(--color-ink-50); }
 }
 
-/* Surfaces sit slightly translucent so the point grid reads through the page
-   without ever competing with text. */
-.card {
-  @apply rounded-xl border border-ink-50 bg-white/85 shadow-sm backdrop-blur-sm;
+/* Lavender light pooling at the top of every page, as behind the site's hero. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 520px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(60% 70% at 85% -10%, rgb(113 115 244 / 0.16), transparent 70%),
+    radial-gradient(45% 60% at 10% -20%, rgb(177 179 253 / 0.18), transparent 70%);
 }
 @media (prefers-color-scheme: dark) {
-  .card { @apply border-ink-800 bg-ink-900/85; }
+  body::before {
+    background:
+      radial-gradient(60% 70% at 85% -10%, rgb(86 89 251 / 0.18), transparent 70%),
+      radial-gradient(45% 60% at 10% -20%, rgb(86 89 251 / 0.10), transparent 70%);
+  }
 }
+
+::selection { background: var(--color-brand-100); color: var(--color-ink-950); }
+html { scrollbar-color: var(--color-ink-100) transparent; caret-color: var(--color-brand-500); }
+:focus-visible { outline: 2px solid var(--color-brand-400); outline-offset: 2px; border-radius: 8px; }
+@media (prefers-color-scheme: dark) {
+  ::selection { background: rgb(86 89 251 / 0.45); color: #fff; }
+  html { scrollbar-color: var(--color-ink-700) transparent; }
+}
+
+/* A card: white, rounded, lifted by the long soft shadow and ringed by the
+   faintest violet edge. The platform's one container. */
+.card {
+  background: var(--sheet);
+  border-radius: 1.125rem;
+  box-shadow: var(--shadow-glow);
+}
+@media (prefers-color-scheme: dark) {
+  .card { box-shadow: 0 0 0 1px rgb(113 115 244 / 0.16), 0 10px 36px -10px rgb(86 89 251 / 0.30); }
+}
+
+/* An inset panel inside a card: pale grey, rounded, with lavender light in
+   one corner and the dot grid showing through — the site's feature tile. */
+.panel {
+  border-radius: 0.875rem;
+  background:
+    radial-gradient(70% 90% at 100% 100%, rgb(177 179 253 / 0.35), transparent 65%),
+    radial-gradient(circle at 1px 1px, rgb(87 89 242 / 0.14) 1px, transparent 1.4px) 0 0 / 14px 14px,
+    #f6f6f9;
+}
+@media (prefers-color-scheme: dark) {
+  .panel {
+    background:
+      radial-gradient(70% 90% at 100% 100%, rgb(86 89 251 / 0.22), transparent 65%),
+      radial-gradient(circle at 1px 1px, rgb(150 152 240 / 0.14) 1px, transparent 1.4px) 0 0 / 14px 14px,
+      #191a22;
+  }
+}
+
+/* A field label: small, medium weight, the grey of the site's body copy. */
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--color-ink-400);
+  line-height: 1.3;
+}
+@media (prefers-color-scheme: dark) { .label { color: var(--color-ink-300); } }
+
+/* Identifiers — GTIN, REF, PZN: tabular, a touch of tracking, no costume. */
+.code {
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+}
+
+/* Separators in the soft line colours. */
+.hair { border-color: var(--line); }
+.hair-strong { border-color: var(--line-strong); }
 .tnum { font-variant-numeric: tabular-nums; }
 
+/* The action that matters, in the site's gradient: deep blue into violet. */
+.btn-gradient {
+  background-image: linear-gradient(95deg, #0e10d6 0%, #5659fb 55%, #7173f4 115%);
+  box-shadow: 0 1px 2px rgb(14 16 214 / 0.20), 0 6px 18px -6px rgb(86 89 251 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+.btn-gradient:hover { box-shadow: 0 1px 2px rgb(14 16 214 / 0.25), 0 10px 26px -6px rgb(86 89 251 / 0.70), inset 0 1px 0 rgb(255 255 255 / 0.22); filter: brightness(1.05); }
+.btn-gradient:active { filter: brightness(0.96); }
+.btn-gradient:disabled { background-image: none; background-color: var(--color-ink-100); box-shadow: none; filter: none; }
+@media (prefers-color-scheme: dark) { .btn-gradient:disabled { background-color: var(--color-ink-800); } }
 
 /* An upload reports no progress to bar against: the server action blocks until
    extraction has finished, and a catalogue PDF is minutes of work behind a
@@ -62,11 +168,11 @@ body {
   to   { transform: translateX(350%); }
 }
 .bar-indeterminate {
-  @apply relative h-1.5 overflow-hidden rounded-full bg-ink-50;
+  @apply relative h-1.5 overflow-hidden rounded-full bg-brand-50;
 }
 .bar-indeterminate::after {
   content: "";
-  @apply absolute inset-y-0 left-0 w-[28%] rounded-full bg-brand-500;
+  @apply absolute inset-y-0 left-0 w-[28%] rounded-full bg-gradient-to-r from-brand-800 to-brand-400;
   animation: bar-sweep 1.4s cubic-bezier(.65,.02,.36,1) infinite;
 }
 @media (prefers-color-scheme: dark) {

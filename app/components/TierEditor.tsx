@@ -32,7 +32,7 @@ export function TierEditor({ canonicalId, productName, uom, tiers, currency = "C
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}
-        className={`whitespace-nowrap rounded-lg border border-ink-200 font-medium text-ink-600 transition hover:bg-ink-25 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800 ${
+        className={`whitespace-nowrap rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong)] transition hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] dark:bg-ink-900 dark:text-ink-100 ${
           compact ? "w-full px-3 py-1.5 text-xs" : "px-3 py-1.5 text-sm"}`}>
         {tiers.length ? "Edit pricing" : "Set pricing"}
       </button>
@@ -86,7 +86,7 @@ function Dialog({ canonicalId, productName, uom, tiers, currency, onClose }: {
   return createPortal((
     <div role="dialog" aria-modal="true" aria-labelledby={titleId}
       className="fixed inset-0 z-50 grid place-items-center bg-ink-950/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-ink-100 bg-white p-6 shadow-xl dark:border-ink-700 dark:bg-ink-900">
+      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-[var(--sheet)] p-6 shadow-[0_0_0_1px_rgb(87_89_242/0.12),0_30px_80px_-20px_rgb(40_42_120/0.45)]">
         <h2 id={titleId} className="text-base font-semibold text-ink-950 dark:text-white">
           Pricing
         </h2>
@@ -100,7 +100,7 @@ function Dialog({ canonicalId, productName, uom, tiers, currency, onClose }: {
         <form action={action} className="mt-4 space-y-3">
           <input type="hidden" name="canonicalId" value={canonicalId} />
 
-          <div className="grid grid-cols-[1fr_1fr_2rem] gap-2 text-[11px] font-medium uppercase tracking-wide text-ink-400">
+          <div className="label grid grid-cols-[1fr_1fr_2rem] gap-2">
             <span>From (units)</span>
             <span>Unit price ({currency})</span>
             <span />
@@ -111,15 +111,15 @@ function Dialog({ canonicalId, productName, uom, tiers, currency, onClose }: {
               <input name="minVolume" inputMode="numeric" value={d.volume}
                 onChange={(e) => set(d.key, "volume", e.target.value)}
                 placeholder={i === 0 ? "0" : "250"} disabled={pending}
-                className="w-full rounded-lg border border-ink-200 px-2.5 py-1.5 text-sm tnum disabled:opacity-50 dark:border-ink-600 dark:bg-ink-950" />
+                className="w-full rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-2.5 py-1.5 text-sm tnum disabled:opacity-50" />
               <input name="unitPrice" inputMode="decimal" value={d.price}
                 onChange={(e) => set(d.key, "price", e.target.value)}
                 placeholder="0.00" disabled={pending}
-                className="w-full rounded-lg border border-ink-200 px-2.5 py-1.5 text-sm tnum disabled:opacity-50 dark:border-ink-600 dark:bg-ink-950" />
+                className="w-full rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-2.5 py-1.5 text-sm tnum disabled:opacity-50" />
               <button type="button" disabled={pending || rows.length === 1}
                 onClick={() => setRows((r) => r.filter((x) => x.key !== d.key))}
                 title="Remove this tier"
-                className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 dark:hover:bg-rose-950/40">
+                className="grid h-7 w-7 place-items-center rounded-lg text-ink-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30 dark:hover:bg-rose-500/10">
                 <Trash className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -127,7 +127,7 @@ function Dialog({ canonicalId, productName, uom, tiers, currency, onClose }: {
 
           <button type="button" disabled={pending}
             onClick={() => setRows((r) => [...r, emptyDraft()])}
-            className="inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-xs font-medium text-brand-600 transition hover:text-brand-700 disabled:opacity-40 dark:text-brand-300">
+            className="inline-flex items-center gap-1.5 px-1 py-1 text-xs font-medium text-brand-600 transition hover:text-brand-700 disabled:opacity-40 dark:text-brand-300">
             <Plus className="h-3.5 w-3.5" /> Add a tier
           </button>
 
@@ -159,11 +159,11 @@ function Dialog({ canonicalId, productName, uom, tiers, currency, onClose }: {
             </button>
             <div className="flex gap-2">
               <button type="button" onClick={onClose} disabled={pending}
-                className="rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] transition-all hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] disabled:opacity-40 dark:bg-ink-900 dark:text-ink-100 px-4 py-2 text-sm">
                 Cancel
               </button>
               <button type="submit" disabled={pending || duplicate}
-                className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50">
+                className="inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                 {pending ? "Saving…" : "Save pricing"}
               </button>
             </div>
@@ -181,14 +181,14 @@ function Preview({ rows, currency, uom }: {
   const usable = rows.filter((r) => Number.isFinite(r.v) && Number.isFinite(r.p) && r.p > 0);
   if (!usable.length) {
     return (
-      <p className="rounded-lg bg-ink-25 px-3 py-2 text-xs text-ink-400 dark:bg-ink-800/60">
+      <p className="rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2 text-xs text-ink-400">
         No price yet. Saving like this leaves the product listed and matchable, but it cannot be
         quoted or ordered.
       </p>
     );
   }
   return (
-    <dl className="space-y-1 rounded-lg bg-ink-25 px-3 py-2.5 text-xs dark:bg-ink-800/60">
+    <dl className="space-y-1 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2.5 text-xs">
       {usable.map((r, i) => {
         const next = usable[i + 1];
         const from = i === 0 ? 0 : r.v;

@@ -3,9 +3,38 @@
 A working implementation of [SANOVIO Plattformstruktur.md](SANOVIO%20Plattformstruktur.md) (structure v2):
 hospital and supplier data in, harmonised product identity in the middle, pooled orders out.
 
+## Try it — the demo in four steps
+
+For anyone with the repo who wants to click through a filled platform:
+
+1. Install **Node.js 24 or newer** (<https://nodejs.org>) — `node --version` should say v24 or higher.
+2. Get the code and install:
+   ```bash
+   git clone https://github.com/DJ-Cat/SANOVIO-Case-Study.git
+   cd SANOVIO-Case-Study
+   npm install
+   ```
+3. Copy `.env.example` to `.env` and paste in whichever API keys you have. All of them are
+   optional — without keys the demo still opens with every result in it; with them, new work
+   (a fresh "Replace with this" analysis, meaning-based search, matching a new upload) runs live.
+4. Start the demo and open **http://localhost:3001**:
+   ```bash
+   npm run demo
+   ```
+
+The demo is filled: a manufacturer catalogue (89 articles with photography), a hospital's article
+master, the automatic suggestions, and a chosen replacement with its full AI analysis. Click
+anything — place orders, sign points off, send questions, upload files. `npm run demo:reset` puts it
+back exactly as it was. The clean edition that ships empty runs separately (`npm run dev`, :3000).
+
+Uploading a new **PDF** catalogue additionally needs the Python extractor in `extract_lib/` set up
+(see below); everything else — including spreadsheets — works without it.
+
+## Development
+
 ```bash
 npm install     # also seeds organisations and users
-npm run dev     # http://localhost:3000
+npm run dev     # http://localhost:3000 — the clean edition, empty
 ```
 
 Node ≥ 24 (the data layer uses the built-in `node:sqlite`). No Docker, no cloud account, no API keys.
@@ -19,6 +48,27 @@ npm run demo:load   # reload both sides — 89 articles with photography + 10 de
 `verify` runs against its own database (`db/verify.db`, via `SANOVIO_DB`) and never writes the one
 the app serves. Running it does not put fixture data in front of you the next time you start the
 app — the platform starting empty is a property worth protecting from its own test harness.
+
+### Two editions: clean and demo
+
+| | Clean — what ships | Demo — for trying it out |
+|---|---|---|
+| Start | `npm run dev` → http://localhost:3000 | `npm run demo` → http://localhost:3001 |
+| Database | `db/sanovio.db`, starts empty | `db/demo.db`, filled with sample data |
+| Production | `npm run build && npm start` | `npm run build:demo && npm run start:demo` |
+| Back to the start | `npm run db:reset` (empty) | `npm run demo:reset` (the snapshot again) |
+
+The two run side by side and never share a file: whatever is clicked in the demo — orders
+placed, points signed off, catalogues uploaded — stays in the demo. The demo edition says so on
+every page with a *Demo data* badge.
+
+The demo is restored from `db/demo-snapshot.db`, a frozen copy that is never served. It holds the
+BD catalogue with its photography, the hospital's article master, the automatic suggestions and a
+chosen replacement with its full AI analysis — work that cost real API calls, so it is kept
+rather than rebuilt. To change what the demo starts from, set it up in the demo and run
+`npm run demo:save`. On a fresh checkout without a snapshot (databases are gitignored),
+`npm run demo` builds one from the frozen catalogue in `fixtures/` instead — no key, no cost, but
+without the AI analyses.
 
 ---
 

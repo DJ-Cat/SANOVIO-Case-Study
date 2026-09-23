@@ -39,7 +39,7 @@ export default async function SupplierUpload() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Uploaded catalogues</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Uploaded catalogues</h2>
         {docs.length === 0 ? (
           <div className="card p-8 text-center text-sm text-ink-400">
             No catalogue uploaded yet.

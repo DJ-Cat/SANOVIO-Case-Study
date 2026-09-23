@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { DotGrid } from "./components/DotGrid";
+import { manrope } from "./fonts";
 
 export const metadata: Metadata = {
   title: "SANOVIO — The AI Platform for Procurement Optimization in Medical Supplies",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={manrope.variable}>
       <body className="min-h-full antialiased">
         {/* Interactive point grid, behind everything, on every page. */}
         <DotGrid />

@@ -45,6 +45,10 @@ export function Back({ href, label = "Back" }: { href?: string; label?: string }
     setCanGoBack(navigatedInApp || document.referrer.startsWith(`${location.origin}/`));
   }, [pathname]);
 
+  // A portal's own pages are one click away in the rail; Back is for the
+  // detail pages a link drops you into.
+  if (!href && pathname.split("/").filter(Boolean).length <= 2) return null;
+
   const fallback = href ?? parentOf(pathname);
 
   return (
@@ -55,10 +59,9 @@ export function Back({ href, label = "Back" }: { href?: string; label?: string }
         e.preventDefault();
         if (canGoBack) router.back(); else router.push(fallback);
       }}
-      className="group -ml-1 inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-sm
-                 text-ink-400 transition hover:text-ink-900 focus-visible:outline-2
-                 focus-visible:outline-offset-2 focus-visible:outline-brand-500
-                 dark:hover:text-ink-100"
+      className="group -ml-1 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium
+                 text-ink-400 transition hover:bg-white hover:text-ink-900 hover:shadow-[0_0_0_1px_var(--line)]
+                 dark:hover:bg-ink-900 dark:hover:text-ink-100"
     >
       <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
       {label}

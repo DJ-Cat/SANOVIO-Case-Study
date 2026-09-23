@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Page, Empty, RiskBadge, ConfidenceBar, chf, num, price } from "@/app/components/ui";
+import { Page, Note, Empty, RiskBadge, ConfidenceBar, chf, num, price, Callout } from "@/app/components/ui";
+import { dimensionLabel, dimensionValue, isIdentifier } from "@/app/components/format";
 import { ProductEditor } from "@/app/components/ProductEditor";
 import { TierEditor } from "@/app/components/TierEditor";
 import { supplierProduct, productImages, thresholds, tiersBySupplier } from "@/lib/queries";
@@ -33,19 +34,25 @@ export default async function SupplierProduct(
 
   return (
     <Page title={p.name ?? p.extractedName}
-      lead={`${me.name} · article ${p.sku}${p.page ? ` · page ${p.page} of ${p.sourceFilename ?? "your catalogue"}` : ""}`}>
+      lead={p.page ? `Page ${p.page} of ${p.sourceFilename ?? "your catalogue"}` : undefined}
+      fields={[
+        ...(p.mdrClass ? [{ label: "Risk class", value: <RiskBadge cls={p.mdrClass} /> }] : []),
+        { label: "Unit", value: <>per {p.uom ?? "Stück"}{(p.packSize ?? 1) > 1 ? <span className="text-ink-400"> · {p.packSize} per pack</span> : ""}</> },
+        { label: "Article no.", value: <span className="code text-[0.85rem]">{p.sku}</span> },
+        ...(p.gtin ? [{ label: "GTIN", value: <span className="code text-[0.85rem]">{p.gtin}</span> }] : []),
+      ]}>
 
       {/* A row still in the review queue has no canonical product, so there is
           nothing yet to price or photograph. Say which step is missing rather
           than showing dead controls. */}
       {!p.canonicalId && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <Note tone="warn" label="In review">
           This row is still in your review queue at {p.confidence} extraction confidence, below
           the bar of {EXTRACTION_THRESHOLD}. Confirm it on the{" "}
           <Link href="/supplier" className="font-medium underline">catalogue page</Link> and it
           becomes a product hospitals can be matched against — then it can be priced and
           photographed here.
-        </div>
+        </Note>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
@@ -58,24 +65,9 @@ export default async function SupplierProduct(
         </div>
 
         <div className="min-w-0 space-y-5">
-          <div className="flex flex-wrap items-center gap-2">
-            {p.mdrClass && <RiskBadge cls={p.mdrClass} />}
-            <span className="rounded-full bg-ink-50 px-2 py-0.5 text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
-              per {p.uom ?? "Stück"}{(p.packSize ?? 1) > 1 ? ` · ${p.packSize}/pack` : ""}
-            </span>
-            <span className="rounded-full bg-ink-50 px-2 py-0.5 font-mono text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
-              art. {p.sku}
-            </span>
-            {p.gtin && (
-              <span className="rounded-full bg-ink-50 px-2 py-0.5 font-mono text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
-                GTIN {p.gtin}
-              </span>
-            )}
-          </div>
-
           <section className="card p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+              <h2 className="label">
                 Pricing
               </h2>
               {p.canonicalId && (
@@ -95,18 +87,15 @@ export default async function SupplierProduct(
                     ? "Stated in the catalogue you uploaded."
                     : "Set by you."}
                 </p>
-                <dl className="mt-3 space-y-1 text-sm tnum">
+                <dl className="mt-2">
                   {tiers.map((t, i) => {
                     const next = tiers[i + 1];
                     return (
-                      <div key={t.id} className="flex justify-between gap-4 border-b border-ink-50 pb-1 last:border-0 dark:border-ink-800">
-                        <dt className="text-ink-500 dark:text-ink-300">
-                          {next
-                            ? `${num(t.min_volume)} – ${num(next.min_volume - 1)} ${p.uom ?? "units"}`
-                            : `${num(t.min_volume)}+ ${p.uom ?? "units"}`}
-                        </dt>
-                        <dd className="font-medium">{p.currency} {chf(t.unit_price, 4)}</dd>
-                      </div>
+                      <Callout key={t.id}
+                        label={next
+                          ? `${num(t.min_volume)} – ${num(next.min_volume - 1)} ${p.uom ?? "units"}`
+                          : `${num(t.min_volume)}+ ${p.uom ?? "units"}`}
+                        value={`${p.currency} ${chf(t.unit_price, 4)}`} />
                     );
                   })}
                 </dl>
@@ -115,7 +104,7 @@ export default async function SupplierProduct(
           </section>
 
           <section className="card p-5">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+            <h2 className="label">
               As extracted from your catalogue
             </h2>
             <div className="mt-3 space-y-2 text-sm">
@@ -139,15 +128,12 @@ export default async function SupplierProduct(
 
           {Object.keys(p.attributes).length > 0 && (
             <section className="card p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+              <h2 className="label">
                 Specification
               </h2>
-              <dl className="mt-3 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+              <dl className="mt-2 grid gap-x-8 sm:grid-cols-2">
                 {Object.entries(p.attributes).map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4 border-b border-ink-50 pb-1 dark:border-ink-800">
-                    <dt className="text-ink-400">{k.replace(/_/g, " ")}</dt>
-                    <dd className="font-medium tnum">{String(v)}</dd>
-                  </div>
+                  <Callout key={k} label={dimensionLabel(k)} value={dimensionValue(k, v)} code={isIdentifier(k)} />
                 ))}
               </dl>
             </section>

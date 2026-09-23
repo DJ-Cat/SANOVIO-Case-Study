@@ -1,0 +1,1000 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T19:01:56.470939+00:00",
+  "title": "Design System: SANOVIO",
+  "extensions": {
+    "colorMeta": {
+      "sanovio-blue": {
+        "role": "primary",
+        "displayName": "SANOVIO Blue",
+        "canonical": "#5659fb",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-500"
+      },
+      "sanovio-blue-deep": {
+        "role": "primary",
+        "displayName": "Deep Brand Blue",
+        "canonical": "#4e51e4",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-600"
+      },
+      "sanovio-blue-ink": {
+        "role": "primary",
+        "displayName": "Blue Ink",
+        "canonical": "#3d3fb2",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-700"
+      },
+      "gradient-start": {
+        "role": "primary",
+        "displayName": "Deep Blue (gradient start)",
+        "canonical": "#0e10d6",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-800"
+      },
+      "gradient-end": {
+        "role": "primary",
+        "displayName": "Soft Violet (gradient end)",
+        "canonical": "#7173f4",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-400"
+      },
+      "periwinkle": {
+        "role": "primary",
+        "displayName": "Periwinkle",
+        "canonical": "#b1b3fd",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-200"
+      },
+      "lavender-wash": {
+        "role": "primary",
+        "displayName": "Lavender Wash",
+        "canonical": "#dcdcfe",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-100"
+      },
+      "lavender-mist": {
+        "role": "primary",
+        "displayName": "Lavender Mist",
+        "canonical": "#eeeeff",
+        "tonalRamp": [
+          "#0e10d6",
+          "#3d3fb2",
+          "#4e51e4",
+          "#5659fb",
+          "#7173f4",
+          "#8e90fc",
+          "#b1b3fd",
+          "#dcdcfe",
+          "#eeeeff"
+        ],
+        "source": "--color-brand-50"
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--sheet"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "canonical": "#f7f7fa",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--ground"
+      },
+      "panel-grey": {
+        "role": "neutral",
+        "displayName": "Panel Grey",
+        "canonical": "#f6f6f9",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": ".panel base"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "#ececf1",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--line"
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "canonical": "#dfe0e7",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--line-strong"
+      },
+      "sheet-dark": {
+        "role": "neutral",
+        "displayName": "Sheet (dark)",
+        "canonical": "#14151c",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--sheet dark"
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Ground (dark)",
+        "canonical": "#0a0b10",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--ground dark"
+      },
+      "panel-dark": {
+        "role": "neutral",
+        "displayName": "Panel (dark)",
+        "canonical": "#191a22",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": ".panel dark base"
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Line (dark)",
+        "canonical": "#23242d",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--line dark"
+      },
+      "line-strong-dark": {
+        "role": "neutral",
+        "displayName": "Line Strong (dark)",
+        "canonical": "#30313c",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--line-strong dark"
+      },
+      "ink-25": {
+        "role": "neutral",
+        "displayName": "Ink 25",
+        "canonical": "#fafafb",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-25"
+      },
+      "ink-50": {
+        "role": "neutral",
+        "displayName": "Ink 50",
+        "canonical": "#f1f1f4",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-50"
+      },
+      "ink-100": {
+        "role": "neutral",
+        "displayName": "Ink 100",
+        "canonical": "#dcdde3",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-100"
+      },
+      "ink-300": {
+        "role": "neutral",
+        "displayName": "Ink 300",
+        "canonical": "#8e909b",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-300"
+      },
+      "ink-400": {
+        "role": "neutral",
+        "displayName": "Ink 400",
+        "canonical": "#737582",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-400"
+      },
+      "ink-500": {
+        "role": "neutral",
+        "displayName": "Ink 500",
+        "canonical": "#5e5e6b",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-500"
+      },
+      "ink-600": {
+        "role": "neutral",
+        "displayName": "Ink 600",
+        "canonical": "#4a4c5b",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-600"
+      },
+      "ink-700": {
+        "role": "neutral",
+        "displayName": "Ink 700",
+        "canonical": "#3a3c47",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-700"
+      },
+      "ink-900": {
+        "role": "neutral",
+        "displayName": "Ink 900",
+        "canonical": "#1c1d24",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-900"
+      },
+      "ink-950": {
+        "role": "neutral",
+        "displayName": "Ink 950",
+        "canonical": "#0d0e14",
+        "tonalRamp": [
+          "#0d0e14",
+          "#1c1d24",
+          "#2a2b34",
+          "#3a3c47",
+          "#4a4c5b",
+          "#5e5e6b",
+          "#737582",
+          "#8e909b",
+          "#b9bac3",
+          "#dcdde3",
+          "#f1f1f4",
+          "#fafafb"
+        ],
+        "source": "--color-ink-950"
+      },
+      "blocking-rose": {
+        "role": "tertiary",
+        "displayName": "Blocking Rose",
+        "canonical": "oklch(58.6% 0.253 17.585)",
+        "tonalRamp": [
+          "oklch(15% 0.2 17.6)",
+          "oklch(27% 0.2 17.6)",
+          "oklch(39% 0.2 17.6)",
+          "oklch(51% 0.2 17.6)",
+          "oklch(63% 0.2 17.6)",
+          "oklch(75% 0.2 17.6)",
+          "oklch(86% 0.2 17.6)",
+          "oklch(95% 0.2 17.6)"
+        ],
+        "source": "Tailwind rose-600"
+      },
+      "danger-ink": {
+        "role": "tertiary",
+        "displayName": "Danger Ink",
+        "canonical": "oklch(51.4% 0.222 16.935)",
+        "tonalRamp": [
+          "oklch(15% 0.2 16.9)",
+          "oklch(27% 0.2 16.9)",
+          "oklch(39% 0.2 16.9)",
+          "oklch(51% 0.2 16.9)",
+          "oklch(63% 0.2 16.9)",
+          "oklch(75% 0.2 16.9)",
+          "oklch(86% 0.2 16.9)",
+          "oklch(95% 0.2 16.9)"
+        ],
+        "source": "Tailwind rose-700"
+      },
+      "danger-tint": {
+        "role": "tertiary",
+        "displayName": "Danger Tint",
+        "canonical": "oklch(96.9% 0.015 12.422)",
+        "tonalRamp": [
+          "oklch(15% 0.15 12.4)",
+          "oklch(27% 0.15 12.4)",
+          "oklch(39% 0.15 12.4)",
+          "oklch(51% 0.15 12.4)",
+          "oklch(63% 0.15 12.4)",
+          "oklch(75% 0.15 12.4)",
+          "oklch(86% 0.15 12.4)",
+          "oklch(95% 0.15 12.4)"
+        ],
+        "source": "Tailwind rose-50"
+      },
+      "warn-ink": {
+        "role": "tertiary",
+        "displayName": "Warn Ink",
+        "canonical": "oklch(47.3% 0.137 46.201)",
+        "tonalRamp": [
+          "oklch(15% 0.13 46.2)",
+          "oklch(27% 0.13 46.2)",
+          "oklch(39% 0.13 46.2)",
+          "oklch(51% 0.13 46.2)",
+          "oklch(63% 0.13 46.2)",
+          "oklch(75% 0.13 46.2)",
+          "oklch(86% 0.13 46.2)",
+          "oklch(95% 0.13 46.2)"
+        ],
+        "source": "Tailwind amber-800"
+      },
+      "warn-tint": {
+        "role": "tertiary",
+        "displayName": "Warn Tint",
+        "canonical": "oklch(98.7% 0.022 95.277)",
+        "tonalRamp": [
+          "oklch(15% 0.13 80)",
+          "oklch(27% 0.13 80)",
+          "oklch(39% 0.13 80)",
+          "oklch(51% 0.13 80)",
+          "oklch(63% 0.13 80)",
+          "oklch(75% 0.13 80)",
+          "oklch(86% 0.13 80)",
+          "oklch(95% 0.13 80)"
+        ],
+        "source": "Tailwind amber-50"
+      },
+      "good-ink": {
+        "role": "tertiary",
+        "displayName": "Good Ink",
+        "canonical": "oklch(50.8% 0.118 165.612)",
+        "tonalRamp": [
+          "oklch(15% 0.11 165.6)",
+          "oklch(27% 0.11 165.6)",
+          "oklch(39% 0.11 165.6)",
+          "oklch(51% 0.11 165.6)",
+          "oklch(63% 0.11 165.6)",
+          "oklch(75% 0.11 165.6)",
+          "oklch(86% 0.11 165.6)",
+          "oklch(95% 0.11 165.6)"
+        ],
+        "source": "Tailwind emerald-700"
+      },
+      "good-tint": {
+        "role": "tertiary",
+        "displayName": "Good Tint",
+        "canonical": "oklch(97.9% 0.021 166.113)",
+        "tonalRamp": [
+          "oklch(15% 0.11 166.1)",
+          "oklch(27% 0.11 166.1)",
+          "oklch(39% 0.11 166.1)",
+          "oklch(51% 0.11 166.1)",
+          "oklch(63% 0.11 166.1)",
+          "oklch(75% 0.11 166.1)",
+          "oklch(86% 0.11 166.1)",
+          "oklch(95% 0.11 166.1)"
+        ],
+        "source": "Tailwind emerald-50"
+      },
+      "substitute-ink": {
+        "role": "secondary",
+        "displayName": "Substitute Violet",
+        "canonical": "oklch(49.1% 0.27 292.581)",
+        "tonalRamp": [
+          "oklch(15% 0.2 292.6)",
+          "oklch(27% 0.2 292.6)",
+          "oklch(39% 0.2 292.6)",
+          "oklch(51% 0.2 292.6)",
+          "oklch(63% 0.2 292.6)",
+          "oklch(75% 0.2 292.6)",
+          "oklch(86% 0.2 292.6)",
+          "oklch(95% 0.2 292.6)"
+        ],
+        "source": "Tailwind violet-700"
+      },
+      "substitute-tint": {
+        "role": "secondary",
+        "displayName": "Substitute Tint",
+        "canonical": "oklch(96.9% 0.016 293.756)",
+        "tonalRamp": [
+          "oklch(15% 0.15 293.8)",
+          "oklch(27% 0.15 293.8)",
+          "oklch(39% 0.15 293.8)",
+          "oklch(51% 0.15 293.8)",
+          "oklch(63% 0.15 293.8)",
+          "oklch(75% 0.15 293.8)",
+          "oklch(86% 0.15 293.8)",
+          "oklch(95% 0.15 293.8)"
+        ],
+        "source": "Tailwind violet-50"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing page title only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Every portal page title."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Stat card values, tabular."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section heads, with a 0.8rem ink-400 meta line."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Page default, tabular lining figures on globally."
+      },
+      "body-dense": {
+        "displayName": "Body dense",
+        "purpose": "Tables, notes, dialogs, buttons."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field names, column heads, stat names; sentence case, ink-400."
+      },
+      "pill": {
+        "displayName": "Pill",
+        "purpose": "Status chips and count pills."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Timestamps and secondary meta."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Identifiers (GTIN, REF, PZN) in Manrope; no mono."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-glow",
+        "value": "0 0 0 1px rgb(87 89 242 / 0.10), 0 8px 32px -8px rgb(87 89 242 / 0.28), 0 2px 6px rgb(20 21 40 / 0.04)",
+        "purpose": "Card and search-field default: violet ring, wide low halo."
+      },
+      {
+        "name": "shadow-glow-strong",
+        "value": "0 0 0 1px rgb(87 89 242 / 0.22), 0 10px 40px -6px rgb(87 89 242 / 0.40), 0 2px 6px rgb(20 21 40 / 0.05)",
+        "purpose": "Linked-card hover; search and composer focus-within."
+      },
+      {
+        "name": "shadow-card-dark",
+        "value": "0 0 0 1px rgb(113 115 244 / 0.16), 0 10px 36px -10px rgb(86 89 251 / 0.30)",
+        "purpose": "Card glow in dark mode."
+      },
+      {
+        "name": "shadow-soft",
+        "value": "0 1px 2px rgb(20 21 40 / 0.04), 0 6px 15px rgb(20 21 40 / 0.05), 0 27px 27px rgb(20 21 40 / 0.04), 0 60px 36px rgb(20 21 40 / 0.02)",
+        "purpose": "The site's long neutral multi-layer shadow."
+      },
+      {
+        "name": "shadow-lift",
+        "value": "0 2px 4px rgb(20 21 40 / 0.05), 0 10px 24px rgb(20 21 40 / 0.07), 0 36px 40px rgb(20 21 40 / 0.05)",
+        "purpose": "A stronger neutral lift."
+      },
+      {
+        "name": "shadow-primary",
+        "value": "0 1px 2px rgb(14 16 214 / 0.20), 0 6px 18px -6px rgb(86 89 251 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.18)",
+        "purpose": "Gradient button under-glow; deepens on hover."
+      },
+      {
+        "name": "shadow-ghost-ring",
+        "value": "0 0 0 1px var(--line-strong), 0 1px 2px rgb(20 21 40 / 0.04)",
+        "purpose": "Ghost chip edge."
+      },
+      {
+        "name": "shadow-sidebar",
+        "value": "0 0 0 1px rgb(87 89 242 / 0.10), 0 20px 50px -20px rgb(40 42 120 / 0.30)",
+        "purpose": "Floating sidebar card."
+      },
+      {
+        "name": "shadow-dialog",
+        "value": "0 0 0 1px rgb(87 89 242 / 0.12), 0 30px 80px -20px rgb(40 42 120 / 0.45)",
+        "purpose": "Dialog over a dimmed, 3px-blurred scrim."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(.4,0,.2,1)",
+        "purpose": "Sidebar slide and spacer width, 300ms; off under reduced motion."
+      },
+      {
+        "name": "button-transition",
+        "value": "all 150ms",
+        "purpose": "Button state changes."
+      },
+      {
+        "name": "bar-sweep",
+        "value": "1.4s cubic-bezier(.65,.02,.36,1) infinite",
+        "purpose": "Indeterminate progress sweep; static at 45% opacity under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "note": "Sidebar docks; below it is a drawer."
+      }
+    ],
+    "gradients": [
+      {
+        "name": "sanovio-gradient",
+        "value": "linear-gradient(95deg, #0e10d6 0%, #5659fb 55%, #7173f4 115%)",
+        "purpose": "The one primary action per page; the progress sweep uses brand-800 to brand-400."
+      }
+    ],
+    "atmosphere": [
+      {
+        "name": "page-glow",
+        "value": "radial-gradient(60% 70% at 85% -10%, rgb(113 115 244 / 0.16), transparent 70%), radial-gradient(45% 60% at 10% -20%, rgb(177 179 253 / 0.18), transparent 70%)",
+        "purpose": "Fixed 520px lavender glow at the top of every page (body::before)."
+      },
+      {
+        "name": "panel-dot-grid",
+        "value": "radial-gradient(circle at 1px 1px, rgb(87 89 242 / 0.14) 1px, transparent 1.4px) 0 0 / 14px 14px",
+        "purpose": "Dot grid inside inset panels."
+      }
+    ],
+    "assets": [
+      {
+        "path": "public/brand/sanovio-logo.svg",
+        "kind": "vector wordmark",
+        "provenance": "SANOVIO's own wordmark, downloaded from https://www.sanovio.de/images/desktop/common/sanovio-logo.svg at the user's request.",
+        "usedIn": [
+          "Sidebar",
+          "Brand (mobile)",
+          "Landing page"
+        ]
+      },
+      {
+        "path": "public/logo.png",
+        "kind": "raster logo",
+        "provenance": "Pre-existing SANOVIO mark supplied with the project; used as the favicon."
+      },
+      {
+        "path": "public/wordmark.png",
+        "kind": "raster wordmark",
+        "provenance": "Pre-existing SANOVIO wordmark supplied with the project; superseded in-app by the vector file."
+      },
+      {
+        "path": "/api/product-images/*",
+        "kind": "product photos",
+        "provenance": "Extracted from uploaded manufacturer catalogues. No generated rasters ship."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one gradient action per page.",
+      "html": "<button class=\"ds-btn-primary\">Submit for approval</button>",
+      "css": ".ds-btn-primary { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:0; border-radius:12px; color:#fff; font-size:14px; font-weight:600; cursor:pointer; background-image:linear-gradient(95deg,#0e10d6 0%,#5659fb 55%,#7173f4 115%); box-shadow:0 1px 2px rgb(14 16 214 / 0.20),0 6px 18px -6px rgb(86 89 251 / 0.55),inset 0 1px 0 rgb(255 255 255 / 0.18); transition:all 150ms; } .ds-btn-primary:hover { filter:brightness(1.05); box-shadow:0 1px 2px rgb(14 16 214 / 0.25),0 10px 26px -6px rgb(86 89 251 / 0.70),inset 0 1px 0 rgb(255 255 255 / 0.22); } .ds-btn-primary:active { filter:brightness(0.96); } .ds-btn-primary:focus-visible { outline:2px solid #7173f4; outline-offset:2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Every secondary action: a white chip with a soft ring.",
+      "html": "<button class=\"ds-btn-ghost\">Upload more data</button>",
+      "css": ".ds-btn-ghost { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:inline-flex; align-items:center; padding:8px 16px; border:0; border-radius:12px; background:#fff; color:#3a3c47; font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 0 0 1px #dfe0e7,0 1px 2px rgb(20 21 40 / 0.04); transition:all 150ms; } .ds-btn-ghost:hover { color:#3d3fb2; box-shadow:0 0 0 1px #b1b3fd,0 4px 14px -4px rgb(87 89 242 / 0.30); } .ds-btn-ghost:active { background:#fafafb; } .ds-btn-ghost:focus-visible { outline:2px solid #7173f4; outline-offset:2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Glowing rounded search bar with the gradient Search inset.",
+      "html": "<form class=\"ds-search\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" aria-hidden=\"true\"><circle cx=\"7\" cy=\"7\" r=\"4.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"M10.5 10.5L14 14\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"/></svg><input placeholder=\"Search a product, a maker, a GTIN or PZN\"/><button type=\"button\">Search</button></form>",
+      "css": ".ds-search { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:flex; align-items:center; gap:8px; padding:6px 6px 6px 16px; border-radius:16px; background:#fff; color:#8e909b; box-shadow:0 0 0 1px rgb(87 89 242 / 0.10),0 8px 32px -8px rgb(87 89 242 / 0.28),0 2px 6px rgb(20 21 40 / 0.04); transition:box-shadow 150ms; } .ds-search:focus-within { box-shadow:0 0 0 1px rgb(87 89 242 / 0.22),0 10px 40px -6px rgb(87 89 242 / 0.40),0 2px 6px rgb(20 21 40 / 0.05); } .ds-search input { flex:1; min-width:0; border:0; outline:none; background:transparent; padding:8px 0; font:inherit; font-size:15px; color:#1c1d24; } .ds-search input::placeholder { color:#8e909b; } .ds-search button { font:inherit; font-size:14px; font-weight:600; color:#fff; border:0; border-radius:12px; padding:8px 16px; cursor:pointer; background-image:linear-gradient(95deg,#0e10d6 0%,#5659fb 55%,#7173f4 115%); }"
+    },
+    {
+      "name": "Status Pills",
+      "kind": "chip",
+      "refersTo": "pill-neutral",
+      "description": "Soft tinted pills that say their state; solid rose only for blocking.",
+      "html": "<div class=\"ds-pills\"><span class=\"ds-pill ds-pill-violet\">Substitute · different article</span><span class=\"ds-pill\">MDR IIa</span><span class=\"ds-pill ds-pill-good\">−12.5 %</span><span class=\"ds-count\"><svg viewBox=\"0 0 12 12\" width=\"10\" height=\"10\" aria-hidden=\"true\"><path d=\"M6 1.5l4.7 8.4H1.3z\" fill=\"currentColor\"/></svg>7<span> blocking</span></span><span class=\"ds-pill ds-pill-solid\">Blocks order</span></div>",
+      "css": ".ds-pills { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:flex; flex-wrap:wrap; gap:6px; align-items:center; } .ds-pill { display:inline-flex; align-items:center; border-radius:9999px; padding:3px 10px; font-size:11.5px; font-weight:600; line-height:1.35; background:#f1f1f4; color:#4a4c5b; } .ds-pill-violet { background:oklch(96.9% 0.016 293.756); color:oklch(49.1% 0.27 292.581); } .ds-pill-good { background:oklch(97.9% 0.021 166.113); color:oklch(50.8% 0.118 165.612); font-size:12px; font-variant-numeric:tabular-nums; } .ds-pill-solid { background:oklch(58.6% 0.253 17.585); color:#fff; } .ds-count { display:inline-flex; align-items:center; gap:4px; height:22px; min-width:22px; padding:0 6px; border-radius:9999px; font-size:11.5px; font-weight:700; font-variant-numeric:tabular-nums; background:oklch(96.9% 0.015 12.422); color:oklch(51.4% 0.222 16.935); } .ds-count span { font-weight:600; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The platform's one container: white, 18px, violet edge glow.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-label\">Unit price</div><div class=\"ds-figure\">CHF 0.42</div><div class=\"ds-sub\">against CHF 0.48 today</div></div>",
+      "css": ".ds-card { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); width:220px; padding:14px 16px; border-radius:18px; background:#fff; box-shadow:0 0 0 1px rgb(87 89 242 / 0.10),0 8px 32px -8px rgb(87 89 242 / 0.28),0 2px 6px rgb(20 21 40 / 0.04); transition:box-shadow 200ms; } .ds-card:hover { box-shadow:0 0 0 1px rgb(87 89 242 / 0.22),0 10px 40px -6px rgb(87 89 242 / 0.40),0 2px 6px rgb(20 21 40 / 0.05); } .ds-label { font-size:12px; font-weight:600; letter-spacing:0.005em; line-height:1.3; color:#737582; } .ds-figure { margin-top:4px; font-size:1.35rem; font-weight:700; letter-spacing:-0.01em; color:#0d0e14; font-variant-numeric:tabular-nums; } .ds-sub { margin-top:2px; font-size:12px; color:#737582; }"
+    },
+    {
+      "name": "Inset Panel",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "The site's feature tile: dot grid and lavender corner glow; used for empty states.",
+      "html": "<div class=\"ds-panel\">Nothing ordered yet. Open a row above to replace an item.</div>",
+      "css": ".ds-panel { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); padding:36px 24px; text-align:center; font-size:14px; line-height:1.625; color:#5e5e6b; border-radius:14px; background:radial-gradient(70% 90% at 100% 100%, rgb(177 179 253 / 0.35), transparent 65%), radial-gradient(circle at 1px 1px, rgb(87 89 242 / 0.14) 1px, transparent 1.4px) 0 0 / 14px 14px, #f6f6f9; }"
+    },
+    {
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "segmented-control",
+      "description": "Pill tabs in an ink-50 well; active tab is a white lifted chip.",
+      "html": "<nav class=\"ds-seg\"><a class=\"ds-seg-on\" href=\"#\">Overview</a><a href=\"#\">Open problems</a></nav>",
+      "css": ".ds-seg { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:inline-flex; gap:4px; padding:4px; border-radius:12px; background:#f1f1f4; } .ds-seg a { display:inline-flex; align-items:center; padding:6px 14px; border-radius:8px; font-size:14px; font-weight:600; color:#5e5e6b; text-decoration:none; transition:all 150ms; } .ds-seg a:hover { color:#1c1d24; } .ds-seg a.ds-seg-on { background:#fff; font-weight:700; color:#0d0e14; box-shadow:0 0 0 1px rgb(87 89 242 / 0.10),0 2px 8px -2px rgb(40 42 120 / 0.18); } .ds-seg a:focus-visible { outline:2px solid #7173f4; outline-offset:2px; }"
+    },
+    {
+      "name": "Sidebar",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Floating rounded rail card with the wordmark, a workspace panel tile and nav items.",
+      "html": "<aside class=\"ds-rail\"><div class=\"ds-rail-brand\">SANOVIO</div><div class=\"ds-rail-who\"><b>Hospital portal</b><span>Universitätsspital Limmattal · A. Vogt (Buyer)</span></div><a class=\"ds-rail-on\" href=\"#\">Cockpit</a><a href=\"#\">Catalogue</a><a href=\"#\">Approvals<i>3</i></a><a href=\"#\">Messages<i class=\"ds-unread\">2</i></a></aside>",
+      "css": ".ds-rail { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); width:244px; padding:12px; border-radius:24px; background:#fff; display:flex; flex-direction:column; gap:2px; box-shadow:0 0 0 1px rgb(87 89 242 / 0.10),0 20px 50px -20px rgb(40 42 120 / 0.30); } .ds-rail-brand { text-align:right; padding:8px 4px 16px; color:#5659fb; letter-spacing:0.2em; font-size:13px; font-weight:300; } .ds-rail-who { display:flex; flex-direction:column; margin-bottom:10px; padding:12px 14px; border-radius:14px; background:radial-gradient(70% 90% at 100% 100%, rgb(177 179 253 / 0.35), transparent 65%), #f6f6f9; } .ds-rail-who b { font-size:0.78rem; color:#4e51e4; } .ds-rail-who span { font-size:0.8rem; color:#4a4c5b; } .ds-rail a { display:flex; align-items:center; padding:8px 12px; border-radius:12px; font-size:0.9rem; font-weight:500; color:#4a4c5b; text-decoration:none; transition:all 150ms; } .ds-rail a:hover { background:#fafafb; color:#1c1d24; } .ds-rail a.ds-rail-on { background:#eeeeff; color:#3d3fb2; font-weight:700; box-shadow:0 0 0 1px rgb(87 89 242 / 0.12); } .ds-rail i { margin-left:auto; font-style:normal; min-width:20px; height:20px; display:grid; place-items:center; padding:0 6px; border-radius:9999px; font-size:10.5px; font-weight:700; background:oklch(96.2% 0.059 95.617); color:oklch(47.3% 0.137 46.201); } .ds-rail i.ds-unread { background:#5659fb; color:#fff; }"
+    },
+    {
+      "name": "Note",
+      "kind": "custom",
+      "refersTo": "note-brand",
+      "description": "Soft tinted note with a 1px same-hue ring, bold lead-in and action.",
+      "html": "<div class=\"ds-note\"><svg viewBox=\"0 0 12 12\" width=\"12\" height=\"12\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"4.2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-dasharray=\"2 1.6\"/></svg><span><b>Waiting on the manufacturer.</b> Two answers are still open before this can be ordered.</span></div>",
+      "css": ".ds-note { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:flex; align-items:flex-start; gap:12px; padding:12px 16px; border-radius:12px; font-size:14px; line-height:1.625; background:oklch(98.7% 0.022 95.277); color:oklch(41.4% 0.112 45.904); box-shadow:0 0 0 1px rgb(245 158 11 / 0.22); } .ds-note svg { margin-top:5px; flex-shrink:0; color:oklch(66.6% 0.179 58.318); } .ds-note b { margin-right:6px; color:oklch(47.3% 0.137 46.201); }"
+    },
+    {
+      "name": "Chat Bubbles",
+      "kind": "custom",
+      "refersTo": "chat-bubble-mine",
+      "description": "Rounded bubbles: yours in SANOVIO Blue on the right.",
+      "html": "<div class=\"ds-thread\"><div class=\"ds-bub\">Is the 21 G also available sterile in 100s?</div><div class=\"ds-bub ds-mine\">Yes, REF 304432, same price tier.</div></div>",
+      "css": ".ds-thread { font-family: var(--font-sans, Manrope, ui-sans-serif, system-ui, sans-serif); display:flex; flex-direction:column; gap:8px; width:320px; } .ds-bub { align-self:flex-start; max-width:80%; padding:8px 14px; border-radius:16px; font-size:14px; line-height:1.625; background:#f1f1f4; color:#1c1d24; } .ds-mine { align-self:flex-end; background:#5659fb; color:#fff; box-shadow:0 6px 18px -8px rgb(86 89 251 / 0.6); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "SANOVIO Web, at the Desk",
+    "overview": "The platform is drawn the way sanovio.de draws its own product, so it reads as the same company's tool, not a separate one. Everything sits on calm white cards with generous rounded corners, lifted by a long, very soft shadow and ringed by a faint violet edge glow. Inside them, pale inset panels carry the site's dot grid with lavender light pooling in one corner. A lavender glow washes the top of every page. Manrope runs throughout, in bold, tightly tracked headings and tabular figures.\n\nIt is a dense working surface for buyers and manufacturer staff, so clarity comes before atmosphere. Every control looks pressable: buttons are rounded chips, tabs are segmented pills, and the one action that matters on a page carries the site's blue-to-violet gradient. Every state is said in words. Pills say what they count (\"7 blocking\"), and a drawn mark (ring, half ring, dot, triangle, cross) goes with each colour, so no state depends on colour alone.\n\nThis system replaces an earlier \"technical drawing\" direction that the user rejected. It had square corners, hairline boxes, stamps, title blocks and a mono face, and the user found it hard-edged with unclear interfaces. Nothing from that world carries forward except SANOVIO's brand blue and its grey scale.",
+    "keyCharacteristics": [
+      "White 18px cards with a layered soft shadow and a 1px violet-tinted edge glow; 14px inset panels with a dot grid and a lavender corner glow.",
+      "Manrope only: bold headings with negative tracking, tabular lining figures everywhere, no mono, no all-caps labels.",
+      "One gradient primary action per page (#0E10D6 into #5659FB into #7173F4); all other actions are white ghost chips.",
+      "Pill chips in soft tints; solid rose is reserved for what blocks an order.",
+      "A floating rounded sidebar card carrying SANOVIO's own vector wordmark.",
+      "Light and dark modes, mirrored through `prefers-color-scheme`."
+    ],
+    "rules": [
+      {
+        "name": "The One Gradient Rule",
+        "body": "Each page has exactly one gradient action: the thing the page is for. Everything else is a white ghost chip. If two gradients show at once, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Solid Rose Rule",
+        "body": "Only a pill for something that blocks an order is filled with solid rose. Every other status is a soft tint with dark ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tint-Not-Paint Rule",
+        "body": "Semantic colour arrives as a pale tint behind dark same-hue ink. It never appears as a saturated block of text or a coloured border standing on its own.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Labels are 12px semibold ink-400 in sentence case. No uppercase and no wide tracking anywhere in the system.",
+        "section": "typography"
+      },
+      {
+        "name": "The Figures Not Fonts Rule",
+        "body": "Numbers use tabular lining figures (global `tnum`). Identifiers such as GTIN, REF and PZN use the code treatment (500 weight, 0.02em tracking, slashed zero) in Manrope. A mono face is never introduced.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ring-Not-Border Rule",
+        "body": "Edges are drawn with box-shadow rings (1px tinted), never with a bare 1px border box standing alone. Borders appear only as internal row dividers in the Line colour and on drop zones.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** round everything: cards 18px, panels 14px, buttons 10 to 12px (small 8px), pills and avatars fully round.",
+      "**Do** say state in words: a pill names what it counts (\"7 blocking\", \"No price yet\"), and a drawn mark goes with each status colour.",
+      "**Do** give each page exactly one gradient primary (#0E10D6 into #5659FB into #7173F4). Every other action is a white ghost chip.",
+      "**Do** use soft tinted notes (brand, amber, rose, neutral) with a 1px ring in the same hue.",
+      "**Do** set numbers in tabular figures, and identifiers (GTIN, REF, PZN) in the code treatment in Manrope.",
+      "**Do** set labels at 12px semibold ink-400 in sentence case.",
+      "**Do** mirror every surface in dark mode through `prefers-color-scheme`: dark Sheet, Ground and Panel, with violet rings kept.",
+      "**Do** use SANOVIO's vector wordmark (`public/brand/sanovio-logo.svg`) wherever the brand is shown."
+    ],
+    "donts": [
+      "**Don't** draw a hard 1px box standing alone, square corners, or hairline title-block frames. The user rejected this technical-drawing world.",
+      "**Don't** introduce a mono font, all-caps labels, or letter-spaced eyebrow text.",
+      "**Don't** fill a status pill with solid colour unless it blocks an order.",
+      "**Don't** put the gradient on more than one action on a page, or on anything that is not an action (except the progress bar).",
+      "**Don't** show a number without its unit or what it counts.",
+      "**Don't** use generated raster imagery. Product photos come from the uploaded catalogues, and brand marks are SANOVIO's own files."
+    ]
+  }
+}

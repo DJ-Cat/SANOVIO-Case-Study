@@ -14,17 +14,17 @@ export function ProductShot({ name, eclass, images = [] }: {
   const kind = categoryOf(eclass, name);
   const shot = images[0];
 
+  // The site's feature tile: a rounded card holding a pale panel with the dot
+  // grid and lavender light in its corner, the product sitting on it.
   const FRAME =
-    "grid aspect-square w-full max-w-[22rem] place-items-center overflow-hidden rounded-[28px] " +
-    "border border-white/70 bg-gradient-to-b from-white to-ink-25 " +
-    "shadow-[0_1px_2px_rgba(16,18,40,.05),0_10px_28px_-10px_rgba(16,18,40,.14)] " +
-    "dark:border-ink-700/70 dark:from-ink-800 dark:to-ink-900";
+    "card relative grid aspect-square w-full lg:max-w-[22rem] place-items-center overflow-hidden p-2";
 
   if (!shot) {
     return (
       <figure className="lg:sticky lg:top-20">
-        <div className={FRAME}><Glyph kind={kind} /></div>
-        <figcaption className="mt-2.5 max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
+        <ViewLabel>Category illustration</ViewLabel>
+        <div className={FRAME}><div className="panel grid h-full w-full place-items-center"><Glyph kind={kind} /></div></div>
+        <figcaption className="mt-2.5 lg:max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
           No manufacturer image on file — this is the {LABEL[kind]} category, drawn from ECLASS
           {eclass ? ` ${eclass}` : ""}. Not a photograph of the article.
         </figcaption>
@@ -34,24 +34,29 @@ export function ProductShot({ name, eclass, images = [] }: {
 
   return (
     <figure className="lg:sticky lg:top-20">
+      <ViewLabel>{shot.role === "shared" ? "Family photograph" : "Manufacturer photograph"}</ViewLabel>
       <div className={FRAME}>
-        {/* Plain <img>: the bytes are served from the database, not the build. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/api/product-images/${shot.id}`} alt={name}
-          className="h-full w-full object-contain p-6" />
+        {/* White, not the dotted panel: catalogue photographs carry their own
+            white ground, which would sit on the panel as a pasted box. */}
+        <div className="grid h-full w-full place-items-center rounded-[0.875rem] bg-white">
+          {/* Plain <img>: the bytes are served from the database, not the build. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/api/product-images/${shot.id}`} alt={name}
+            className="h-full w-full object-contain p-6" />
+        </div>
       </div>
 
       {images.length > 1 && (
-        <div className="mt-2.5 flex max-w-[22rem] flex-wrap gap-2">
+        <div className="mt-2.5 flex lg:max-w-[22rem] flex-wrap gap-2">
           {images.slice(1, 5).map((img) => (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img key={img.id} src={`/api/product-images/${img.id}`} alt=""
-              className="h-14 w-14 rounded-xl border border-ink-50 bg-white object-contain p-1 dark:border-ink-700 dark:bg-ink-800" />
+              className="h-14 w-14 rounded-xl bg-white object-contain p-1 shadow-[var(--shadow-glow)]" />
           ))}
         </div>
       )}
 
-      <figcaption className="mt-2.5 max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
+      <figcaption className="mt-2.5 lg:max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
         {shot.caption ? <span className="text-ink-500 dark:text-ink-300">{shot.caption}</span> : null}
         {shot.caption ? " · " : ""}
         From the manufacturer&apos;s catalogue
@@ -75,6 +80,11 @@ export function ProductShot({ name, eclass, images = [] }: {
       </figcaption>
     </figure>
   );
+}
+
+/** What the picture is, above it. */
+function ViewLabel({ children }: { children: React.ReactNode }) {
+  return <div className="label mb-2">{children}</div>;
 }
 
 type Kind = "cannula" | "syringe" | "infusion" | "glove" | "mask" | "wound" | "disinfectant" | "generic";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Page, Table, ConfidenceBar, RiskBadge, Empty, SubmitButton, chf } from "@/app/components/ui";
+import { Page, Table, ConfidenceBar, RiskBadge, Empty, SubmitButton, chf, buttonClass } from "@/app/components/ui";
 import { UploadForm } from "@/app/components/UploadForm";
 import { Download, Trash } from "@/app/components/icons";
 import { hospitalReviewQueue, thresholds, hospitalDocuments } from "@/lib/queries";
@@ -63,7 +63,7 @@ export default function HospitalDocuments() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Uploaded files</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Uploaded files</h2>
         {docs.length === 0 ? (
           <Empty>Nothing uploaded yet. The platform starts empty.</Empty>
         ) : (
@@ -78,12 +78,12 @@ export default function HospitalDocuments() {
                   </div>
                 </div>
                 <a href={`/api/documents/${d.id}`} title="Download original"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-ink-25 hover:text-brand-600 dark:text-ink-300 dark:hover:bg-ink-800">
+                  className={buttonClass("ghost", "sm")}>
                   <Download className="h-3.5 w-3.5" /> Download
                 </a>
                 <form action={deleteDocument.bind(null, d.id)}>
                   <button title="Delete file and every article read out of it"
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-rose-50 hover:text-rose-600 dark:text-ink-300 dark:hover:bg-rose-950/40">
+                    className={buttonClass("danger", "sm")}>
                     <Trash className="h-3.5 w-3.5" /> Delete
                   </button>
                 </form>
@@ -98,7 +98,7 @@ export default function HospitalDocuments() {
           <h2 className="text-lg font-semibold tracking-tight">
             Waiting for your approval
             {pending > 0 && (
-              <span className="ml-2 rounded-full bg-amber-400 px-2 py-0.5 align-middle text-xs font-semibold text-amber-950 tnum">
+              <span className="ml-2 inline-grid h-5 min-w-5 place-items-center rounded-full bg-amber-100 px-1.5 align-middle text-[11px] font-bold text-amber-800 tnum dark:bg-amber-500/20 dark:text-amber-200">
                 {pending}
               </span>
             )}
@@ -111,7 +111,7 @@ export default function HospitalDocuments() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
+          <h3 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
             Unconfirmed links — we have a candidate, below the {LINK_THRESHOLD} bar
           </h3>
           {proposals.length === 0
@@ -139,7 +139,7 @@ export default function HospitalDocuments() {
                         <div className="mt-1 text-[11px] text-ink-300">via {p.link_method}</div>
                       </div>
                     </div>
-                    <p className="mt-3 rounded-lg bg-ink-25 p-2.5 text-xs text-ink-500 dark:bg-ink-800/60 dark:text-ink-200">
+                    <p className="mt-3 border-l hair-strong pl-3 text-xs leading-relaxed text-ink-600 dark:text-ink-200">
                       {p.link_rationale}
                     </p>
                     <div className="mt-3 flex gap-2">
@@ -157,7 +157,7 @@ export default function HospitalDocuments() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
+          <h3 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
             Low-confidence extractions — below {EXTRACTION_THRESHOLD}
           </h3>
           {lowExtraction.length === 0
@@ -185,7 +185,7 @@ export default function HospitalDocuments() {
                           {missing.length === 0
                             ? <span className="text-xs text-ink-300">—</span>
                             : missing.map((m: string) => (
-                              <span key={m} className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">{m}</span>
+                              <span key={m} className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-amber-50 text-amber-800 dark:text-amber-200">{m}</span>
                             ))}
                         </div>
                       </td>
@@ -193,7 +193,7 @@ export default function HospitalDocuments() {
                         <form action={correctField} className="flex flex-wrap items-center gap-1.5">
                           <input type="hidden" name="itemId" value={r.id} />
                           <input type="hidden" name="kind" value="hospital" />
-                          <select name="field" className="rounded border border-ink-200 px-1.5 py-1 text-xs dark:border-ink-600 dark:bg-ink-950">
+                          <select name="field" className="rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-1.5 py-1 text-xs">
                             <option value="extracted_gtin">GTIN</option>
                             <option value="extracted_name">Name</option>
                             <option value="extracted_sku">Article no.</option>
@@ -202,7 +202,7 @@ export default function HospitalDocuments() {
                             <option value="declared_mdr_class">MDR class</option>
                           </select>
                           <input name="value" placeholder="value"
-                            className="w-28 rounded border border-ink-200 px-1.5 py-1 text-xs dark:border-ink-600 dark:bg-ink-950" />
+                            className="w-28 rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-1.5 py-1 text-xs" />
                           <SubmitButton variant="ghost">Save</SubmitButton>
                         </form>
                         <form action={confirmExtraction.bind(null, r.id, "hospital")} className="mt-1.5">

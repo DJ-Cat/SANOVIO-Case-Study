@@ -8,6 +8,7 @@ import {
   postAsSupplierAction, postAsHospitalAction, markConversationReadAction, inboxStampAction,
 } from "@/lib/actions";
 import { Search, Send, Reply, Compose, Chat, Question, ArrowLeft, Close } from "./icons";
+import { buttonClass } from "./controls";
 
 type Side = "hospital" | "supplier";
 
@@ -59,7 +60,7 @@ export function Messenger({
 
   return (
     <div data-thread-open={explicit ? "" : undefined}
-      className={`grid ${explicit ? "h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-10rem)]" : "h-[calc(100dvh-10rem)]"} min-h-[30rem] grid-cols-[minmax(0,1fr)] overflow-hidden rounded-2xl border border-ink-50 bg-white/90 shadow-[0_1px_2px_rgba(16,18,40,.04),0_18px_40px_-24px_rgba(16,18,40,.22)] backdrop-blur-sm md:grid-cols-[19.5rem_minmax(0,1fr)] dark:border-ink-800 dark:bg-ink-900/90`}>
+      className={`grid ${explicit ? "h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-10rem)]" : "h-[calc(100dvh-10rem)]"} min-h-[30rem] grid-cols-[minmax(0,1fr)] overflow-hidden rounded-3xl bg-[var(--sheet)] shadow-[var(--shadow-glow)] md:grid-cols-[19.5rem_minmax(0,1fr)]`}>
       <ConversationList
         side={side} basePath={basePath} paramKey={paramKey} conversations={conversations}
         activeId={activeId} manufacturers={manufacturers}
@@ -97,14 +98,14 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
     && (!q || m.name.toLowerCase().includes(q)));
 
   return (
-    <aside className={`${className} min-h-0 flex-col border-r border-ink-50 bg-ink-25/70 dark:border-ink-800 dark:bg-ink-950/40`}>
+    <aside className={`${className} min-h-0 flex-col border-r hair bg-ink-25/60 dark:bg-ink-900/40`}>
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-        <h1 className="text-lg font-semibold tracking-tight text-ink-950 dark:text-white">Messages</h1>
+        <h1 className="text-lg font-bold tracking-tight text-ink-950 dark:text-white">Messages</h1>
         {side === "hospital" && manufacturers.length > 0 && (
           <button onClick={() => setComposing((v) => !v)} aria-expanded={composing}
             title="New chat with a manufacturer"
-            className={`grid h-8 w-8 place-items-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
-              composing ? "bg-brand-500 text-white" : "text-ink-500 hover:bg-ink-50 dark:text-ink-300 dark:hover:bg-ink-800"}`}>
+            className={`grid h-8 w-8 place-items-center rounded-xl transition ${
+              composing ? "btn-gradient text-white" : "bg-white text-ink-500 shadow-[0_0_0_1px_var(--line-strong)] hover:text-brand-600 dark:bg-ink-900 dark:text-ink-300"}`}>
             <Compose className="h-4 w-4" />
             <span className="sr-only">New chat</span>
           </button>
@@ -117,23 +118,23 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
           <input value={filter} onChange={(e) => setFilter(e.target.value)}
             placeholder={composing ? "Find a manufacturer" : "Search conversations"}
             aria-label={composing ? "Find a manufacturer" : "Search conversations"}
-            className="w-full rounded-lg border border-transparent bg-white py-1.5 pl-8 pr-3 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/15 dark:bg-ink-900 dark:text-ink-50" />
+            className="w-full rounded-xl bg-white py-2 pl-8 pr-3 text-sm text-ink-900 shadow-[0_0_0_1px_var(--line)] outline-none transition placeholder:text-ink-400 focus:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_16px_-6px_rgb(87_89_242/0.35)] dark:bg-ink-900 dark:text-ink-50" />
         </label>
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 [scrollbar-color:var(--color-ink-100)_transparent] [scrollbar-width:thin]"
         aria-label="Conversations">
         {composing && (
-          <div className="mb-2 rounded-xl border border-brand-100 bg-white p-1.5 dark:border-brand-500/30 dark:bg-ink-900">
-            <div className="px-2 pb-1 pt-1 text-[11px] font-semibold text-ink-400">Start a chat with</div>
+          <div className="mb-2 rounded-2xl bg-white p-1.5 shadow-[var(--shadow-glow)] dark:bg-ink-900">
+            <div className="label px-2.5 pb-1 pt-1.5">Start a chat with</div>
             {startable.length === 0 ? (
-              <p className="px-2 pb-2 text-xs text-ink-400">
+              <p className="px-2.5 pb-2 text-xs text-ink-400">
                 {q ? "No manufacturer by that name." : "You already have a chat with every manufacturer here."}
               </p>
             ) : startable.map((m) => (
               <Link key={m.id} href={`${basePath}?${paramKey}=${m.id}`} scroll={false}
                 onClick={() => { setComposing(false); setFilter(""); }}
-                className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-ink-700 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 dark:text-ink-100 dark:hover:bg-brand-500/10">
+                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-ink-700 transition hover:bg-brand-50 dark:text-ink-100 dark:hover:bg-brand-500/10">
                 <Avatar name={m.name} size="sm" />
                 <span className="truncate">{m.name}</span>
               </Link>
@@ -143,7 +144,7 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
 
         {draft && !composing && (
           <div aria-current="page"
-            className="mb-0.5 flex items-center gap-3 rounded-xl bg-white px-2.5 py-2.5 shadow-[0_1px_2px_rgba(16,18,40,.06)] ring-1 ring-ink-50 dark:bg-ink-800 dark:ring-ink-700">
+            className="mb-0.5 flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-glow)] dark:bg-ink-800">
             <Avatar name={draft.name} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{draft.name}</div>
@@ -167,9 +168,9 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
                 <li key={id}>
                   <Link href={`${basePath}?${paramKey}=${id}`} scroll={false}
                     aria-current={on ? "page" : undefined}
-                    className={`group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
-                      on ? "bg-white shadow-[0_1px_2px_rgba(16,18,40,.06)] ring-1 ring-ink-50 dark:bg-ink-800 dark:ring-ink-700"
-                         : "hover:bg-white/70 dark:hover:bg-ink-800/60"}`}>
+                    className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition ${
+                      on ? "bg-white shadow-[var(--shadow-glow)] dark:bg-ink-800"
+                         : "hover:bg-white/70 dark:hover:bg-ink-800/50"}`}>
                     <Avatar name={c.name} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
@@ -186,12 +187,12 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
                         </span>
                         {c.openQuestions > 0 && (
                           <span title={`${c.openQuestions} question${c.openQuestions === 1 ? "" : "s"} waiting for an answer`}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-1.5 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
-                            <Question className="h-3 w-3" />{c.openQuestions} open
+                            className="inline-flex shrink-0 items-center rounded-full bg-amber-50 px-2 py-[2px] text-[10.5px] font-semibold text-amber-800 tnum dark:bg-amber-500/15 dark:text-amber-200">
+                            {c.openQuestions} open
                           </span>
                         )}
                         {c.unread > 0 && (
-                          <span className="grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white tnum"
+                          <span className="grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-brand-500 px-1.5 text-[10px] font-bold text-white tnum"
                             aria-label={`${c.unread} unread`}>
                             {c.unread > 99 ? "99+" : c.unread}
                           </span>
@@ -294,9 +295,9 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-ink-50 px-4 py-3 dark:border-ink-800">
+      <header className="flex items-center gap-3 border-b hair px-5 py-3.5">
         <Link href={backHref} scroll={false} aria-label="Back to conversations"
-          className="-ml-1 grid h-8 w-8 place-items-center rounded-lg text-ink-500 hover:bg-ink-50 md:hidden dark:text-ink-300 dark:hover:bg-ink-800">
+          className="-ml-1 grid h-8 w-8 place-items-center rounded-xl text-ink-500 hover:bg-ink-50 md:hidden dark:text-ink-300 dark:hover:bg-ink-800">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <Avatar name={thread.name} />
@@ -306,7 +307,7 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
         </div>
         {firstOpen && (
           <button onClick={() => jumpTo(firstOpen.id)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20">
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-200">
             <Question className="h-3.5 w-3.5" />
             {thread.openQuestions.length} open question{thread.openQuestions.length === 1 ? "" : "s"}
           </button>
@@ -315,7 +316,7 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
 
       <div ref={scroller}
         onScroll={(e) => { stuck.current = Math.abs(e.currentTarget.scrollTop) < 80; }}
-        className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 py-4 [scrollbar-color:var(--color-ink-100)_transparent] [scrollbar-width:thin] selection:bg-brand-100 sm:px-6"
+        className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 py-4 [scrollbar-color:var(--color-ink-100)_transparent] [scrollbar-width:thin] sm:px-6"
         role="log" aria-live="polite" aria-label={`Conversation with ${thread.name}`}>
         <div ref={log} className="flex flex-1 flex-col">
         {items.length === 0 && pending.length === 0 ? (
@@ -335,9 +336,9 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
           <ol className="space-y-0.5">
             {items.map((it) => it.type === "day" ? (
               <li key={it.key} className="flex items-center gap-3 py-3" aria-label={it.label}>
-                <span className="h-px flex-1 bg-ink-50 dark:bg-ink-800" />
-                <span className="text-[11px] font-medium text-ink-400">{it.label}</span>
-                <span className="h-px flex-1 bg-ink-50 dark:bg-ink-800" />
+                <span className="h-px flex-1 bg-[var(--line)]" />
+                <span className="rounded-full bg-ink-50 px-2.5 py-0.5 text-[11px] font-semibold text-ink-400 dark:bg-ink-800">{it.label}</span>
+                <span className="h-px flex-1 bg-[var(--line)]" />
               </li>
             ) : (
               <MessageRow key={it.m.id} m={it.m} first={it.first} last={it.last} side={side}
@@ -347,7 +348,7 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
               <li key={p.id} className="flex justify-end pt-2">
                 <div className="max-w-[min(34rem,80%)] opacity-60">
                   {p.question && <Quote q={p.question} mine />}
-                  <div className="rounded-2xl rounded-br-md bg-brand-50 px-3.5 py-2 text-sm text-ink-900 dark:bg-brand-500/20 dark:text-ink-50">
+                  <div className={`${ENTRY} ${ENTRY_MINE}`}>
                     <p className="whitespace-pre-wrap break-words">{p.body}</p>
                   </div>
                   <div className="mt-0.5 text-right text-[10px] text-ink-400">Sending…</div>
@@ -426,11 +427,7 @@ function MessageRow({ m, first, last, side, onReply, onJump }: {
         )}
         {m.kind === "reply" && m.question && <Quote q={m.question} mine={mine} onJump={onJump} />}
         <div title={first ? undefined : time}
-          className={`px-3.5 py-2 text-sm leading-relaxed ${
-            mine
-              ? "bg-brand-50 text-ink-900 dark:bg-brand-500/20 dark:text-ink-50"
-              : "border border-ink-50 bg-white text-ink-800 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-          } ${bubbleShape(mine, first, last)}`}>
+          className={`${ENTRY} ${mine ? ENTRY_MINE : ENTRY_THEIRS} ${first ? "" : "mt-1"}`}>
           <p className="whitespace-pre-wrap break-words">{m.body}</p>
         </div>
       </div>
@@ -438,18 +435,20 @@ function MessageRow({ m, first, last, side, onReply, onJump }: {
   );
 }
 
-/** Rounded everywhere except where a bubble meets its neighbour in a run. */
-function bubbleShape(mine: boolean, first: boolean, last: boolean): string {
-  const base = "rounded-2xl";
-  if (mine) return `${base} ${first ? "" : "rounded-tr-md"} ${last ? "" : "rounded-br-md"}`;
-  return `${base} ${first ? "" : "rounded-tl-md"} ${last ? "" : "rounded-bl-md"}`;
-}
+/*
+ * A message is a rounded bubble: yours in the brand blue on the right,
+ * theirs white on the left. A run from one author sits close together, so
+ * it reads as one turn.
+ */
+const ENTRY = "rounded-2xl px-3.5 py-2 text-sm leading-relaxed";
+const ENTRY_MINE = "bg-brand-500 text-white shadow-[0_6px_18px_-8px_rgb(86_89_251/0.6)]";
+const ENTRY_THEIRS = "bg-white text-ink-800 shadow-[0_0_0_1px_var(--line),0_2px_6px_rgb(20_21_40/0.04)] dark:bg-ink-800 dark:text-ink-100";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
-  open: { label: "Waiting for an answer", tone: "text-amber-800 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-200" },
-  answered: { label: "Answered", tone: "text-good-500 bg-good-100/40 dark:bg-good-500/15 dark:text-good-100" },
-  cleared: { label: "Signed off", tone: "text-ink-500 bg-ink-50 dark:bg-ink-800 dark:text-ink-300" },
-  skipped: { label: "Skipped", tone: "text-ink-500 bg-ink-50 dark:bg-ink-800 dark:text-ink-300" },
+  open: { label: "Waiting for an answer", tone: "bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200" },
+  answered: { label: "Answered", tone: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200" },
+  cleared: { label: "Signed off", tone: "bg-ink-50 text-ink-500 dark:bg-ink-800 dark:text-ink-300" },
+  skipped: { label: "Skipped", tone: "bg-ink-50 text-ink-500 dark:bg-ink-800 dark:text-ink-300" },
 };
 
 /**
@@ -464,13 +463,13 @@ function QuestionCard({ q, side, mine, onReply }: {
   const open = q.status === "open";
   return (
     <article id={`q-${q.id}`}
-      className={`overflow-hidden rounded-2xl border bg-white transition-shadow dark:bg-ink-800 ${
-        open && q.type === "blocking" ? "border-rose-200 dark:border-rose-900/70" : "border-ink-100 dark:border-ink-700"}`}>
-      <div className="flex items-start gap-2.5 border-b border-ink-50 bg-ink-25/80 px-3.5 py-2.5 dark:border-ink-700 dark:bg-ink-900/40">
+      className={`overflow-hidden rounded-2xl bg-[var(--sheet)] shadow-[var(--shadow-glow)] transition-shadow ${
+        open && q.type === "blocking" ? "!shadow-[0_0_0_1px_rgb(244_63_94/0.25),0_10px_30px_-10px_rgb(244_63_94/0.35)]" : ""}`}>
+      <div className="flex items-start gap-2.5 bg-ink-25/80 px-4 py-2.5 dark:bg-ink-900/50">
         {q.imageId ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={`/api/product-images/${q.imageId}`} alt=""
-            className="h-8 w-8 shrink-0 rounded-md border border-ink-50 bg-white object-contain p-0.5 dark:border-ink-700" />
+            className="h-8 w-8 shrink-0 rounded-lg bg-white object-contain p-0.5 shadow-[0_0_0_1px_var(--line)]" />
         ) : (
           <Question className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" />
         )}
@@ -483,20 +482,20 @@ function QuestionCard({ q, side, mine, onReply }: {
           )}
         </div>
         {q.type === "blocking" && (
-          <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-            open ? "bg-rose-600 text-white" : "bg-ink-100 text-ink-500 dark:bg-ink-700 dark:text-ink-300"}`}>
+          <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${
+            open ? "bg-rose-600 text-white" : "bg-ink-50 text-ink-500 dark:bg-ink-800 dark:text-ink-300"}`}>
             Blocks the order
           </span>
         )}
       </div>
-      <div className="px-3.5 py-3">
+      <div className="px-4 py-3">
         {q.title && <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">{q.title}</p>}
         <p className={`whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-700 dark:text-ink-200 ${q.title ? "mt-1" : ""}`}>
           {q.text}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-2 border-t border-ink-50 px-3.5 py-2 dark:border-ink-700">
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${status.tone}`}>{status.label}</span>
+      <div className="flex flex-wrap items-center gap-2 border-t hair px-4 py-2.5">
+        <span className={`inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${status.tone}`}>{status.label}</span>
         {q.href && (
           <Link href={q.href}
             className="text-[11px] font-medium text-ink-500 underline-offset-2 hover:text-brand-600 hover:underline dark:text-ink-300 dark:hover:text-brand-300">
@@ -507,10 +506,7 @@ function QuestionCard({ q, side, mine, onReply }: {
           // Answering closes the question, so it is the one primary action on
           // the card. Following up on your own question is secondary.
           <button onClick={() => onReply(q)}
-            className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
-              side === "supplier"
-                ? "bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700"
-                : "text-ink-600 hover:bg-ink-50 dark:text-ink-200 dark:hover:bg-ink-700"}`}>
+            className={`ml-auto ${buttonClass(side === "supplier" ? "primary" : "ghost", "sm")}`}>
             <Reply className="h-3.5 w-3.5" />
             {side === "supplier" ? "Answer" : "Follow up"}
           </button>
@@ -524,7 +520,7 @@ function QuestionCard({ q, side, mine, onReply }: {
 function Quote({ q, mine, onJump }: { q: QuestionRef; mine: boolean; onJump?: (qid: string) => void }) {
   return (
     <button type="button" onClick={() => onJump?.(q.id)} disabled={!onJump}
-      className={`mb-1 flex max-w-full items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[11px] text-ink-500 transition enabled:hover:bg-ink-50 dark:text-ink-300 dark:enabled:hover:bg-ink-800 ${mine ? "self-end" : ""}`}>
+      className={`mb-1 flex max-w-full items-center gap-1.5 rounded-lg bg-ink-50 px-2 py-1 text-left text-[11px] text-ink-500 transition enabled:hover:bg-brand-50 enabled:hover:text-brand-700 dark:bg-ink-800 dark:text-ink-300 ${mine ? "self-end" : ""}`}>
       <Reply className="h-3 w-3 shrink-0" />
       <span className="truncate">
         <span className="font-medium">{q.title ?? q.text}</span>
@@ -556,29 +552,29 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
   };
 
   return (
-    <div className="border-t border-ink-50 px-3 pb-3 pt-2 sm:px-4 dark:border-ink-800">
+    <div className="px-3 pb-3 pt-2 sm:px-4">
       {replyTo && (
-        <div className="mb-2 flex items-start gap-2 rounded-xl border border-brand-100 bg-brand-50/60 px-3 py-2 dark:border-brand-500/30 dark:bg-brand-500/10">
+        <div className="mb-2 flex items-start gap-2 rounded-xl bg-brand-50/70 px-3 py-2 shadow-[0_0_0_1px_rgb(87_89_242/0.14)] dark:bg-brand-500/10">
           <Reply className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-brand-300" />
           <div className="min-w-0 flex-1 text-xs">
-            <div className="font-semibold text-brand-800 dark:text-brand-100">
+            <div className="font-semibold text-ink-900 dark:text-ink-50">
               {side === "supplier" ? "Answering" : "Following up on"} {replyTo.productName ? `· ${replyTo.productName}` : ""}
             </div>
-            <div className="truncate text-brand-700/80 dark:text-brand-200/80">{replyTo.title ?? replyTo.text}</div>
+            <div className="truncate text-ink-600 dark:text-ink-200">{replyTo.title ?? replyTo.text}</div>
             {side === "supplier" && (
-              <div className="mt-0.5 text-[11px] text-brand-700/70 dark:text-brand-200/70">
+              <div className="mt-0.5 text-[11px] text-ink-400">
                 Sending this answers the question{replyTo.type === "blocking" ? " and lifts what it blocks" : ""}.
               </div>
             )}
           </div>
           <button onClick={onCancelReply} aria-label="Cancel reply"
-            className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-brand-700 hover:bg-brand-100 dark:text-brand-200 dark:hover:bg-brand-500/20">
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-brand-700 hover:bg-brand-100 dark:text-brand-200 dark:hover:bg-brand-500/20">
             <Close className="h-3 w-3" />
           </button>
         </div>
       )}
       <form onSubmit={(e) => { e.preventDefault(); submit(); }}
-        className="flex items-end gap-2 rounded-2xl border border-ink-100 bg-white px-3 py-2 transition focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-500/15 dark:border-ink-700 dark:bg-ink-950">
+        className="flex items-end gap-2 rounded-2xl bg-[var(--sheet)] py-1.5 pl-4 pr-1.5 shadow-[var(--shadow-glow)] transition-shadow focus-within:shadow-[var(--shadow-glow-strong)]">
         <textarea ref={textarea} rows={1} maxLength={4000}
           placeholder={replyTo ? (side === "supplier" ? "Type your answer" : "Write your follow-up") : `Message ${name}`}
           aria-label="Message"
@@ -591,8 +587,8 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
           }}
           className="max-h-40 min-h-[1.5rem] flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50" />
         <button type="submit" disabled={empty} aria-label="Send"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 active:bg-brand-700 disabled:bg-ink-50 disabled:text-ink-300 dark:disabled:bg-ink-800">
-          <Send className="h-4 w-4" />
+          className="btn-gradient inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold text-white">
+          <Send className="h-3.5 w-3.5" /><span className="hidden sm:inline">Send</span>
         </button>
       </form>
       <div className="mt-1 flex justify-between gap-3 px-1 text-[11px]">
@@ -609,7 +605,7 @@ function Placeholder({ side, empty }: { side: Side; empty: boolean }) {
   return (
     <div className="grid flex-1 place-items-center p-8 text-center">
       <div className="max-w-sm">
-        <Chat className="mx-auto h-10 w-10 text-ink-100 dark:text-ink-700" />
+        <Chat className="mx-auto h-9 w-9 text-ink-200 dark:text-ink-700" />
         <p className="mt-3 text-sm font-medium text-ink-700 dark:text-ink-100">
           {empty
             ? side === "supplier" ? "No conversations yet" : "Start a conversation"
@@ -629,22 +625,23 @@ function Placeholder({ side, empty }: { side: Side; empty: boolean }) {
 
 const TONES = [
   "bg-brand-100 text-brand-800 dark:bg-brand-500/25 dark:text-brand-100",
+  "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-100",
   "bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-100",
   "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100",
   "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-100",
-  "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-100",
-  "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-100",
 ];
 
-/** Initials on a tone picked from the name, so each organisation keeps its colour. */
+/** Initials in a soft round well, the tone picked from the name so each organisation keeps its colour. */
 function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
-  const letters = name.replace(/\(.*?\)/g, "").split(/[\s.\-]+/).filter((w) => /\p{L}/u.test(w))
-    .map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const words = name.replace(/\(.*?\)/g, "").split(/[\s.\-]+/).filter((w) => /\p{L}/u.test(w));
+  // A name that already is an abbreviation (BD, KSA) is its own monogram.
+  const letters = (words.length === 1 && /^\p{Lu}{2,3}$/u.test(words[0]) ? words[0]
+    : words.map((w) => w[0]).slice(0, 2).join("")).toUpperCase() || "?";
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const dims = size === "sm" ? "h-7 w-7 text-[10px]" : size === "lg" ? "mx-auto h-14 w-14 text-base" : "h-10 w-10 text-xs";
   return (
-    <span aria-hidden className={`grid shrink-0 place-items-center rounded-full font-semibold ${dims} ${TONES[h % TONES.length]}`}>
+    <span aria-hidden className={`grid shrink-0 place-items-center rounded-full font-bold ${dims} ${TONES[h % TONES.length]}`}>
       {letters}
     </span>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Page, Table, ConfidenceBar, Empty, SubmitButton, Stat, price } from "@/app/components/ui";
+import { Page, Note, Table, ConfidenceBar, Empty, SubmitButton, Stat, DataSheet, price } from "@/app/components/ui";
 import { supplierCatalogue, supplierReviewQueue, thresholds, primaryImages } from "@/lib/queries";
 import { currentSupplier } from "@/lib/session";
 import { confirmExtraction, correctField } from "@/lib/actions";
@@ -22,22 +22,20 @@ export default async function SupplierPage() {
     <Page title="Catalogue"
       lead="Catalogue uploaded and extracted. Rows below the extraction threshold surface at the top rather than being buried in a tab — a bad extraction must never silently produce a savings claim to a hospital.">
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <DataSheet>
         <Stat label="Catalogue rows" value={String(catalogue.length)} />
         <Stat label="Linked to a canonical product" value={String(linked)} />
         <Stat label="Needs review" value={String(unchecked.length)} sub={`below ${EXTRACTION_THRESHOLD} extraction confidence`} />
         <Stat label="With product image" value={String(withImage)} sub="recovered from your catalogue PDF" />
-      </div>
+      </DataSheet>
 
       {unchecked.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+          <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
             Needs review
           </h2>
           {unchecked[0].note && (
-            <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-              {unchecked[0].filename}: {unchecked[0].note}
-            </p>
+            <Note tone="warn" label="Extraction"><span className="code text-[0.8rem]">{unchecked[0].filename}</span> — {unchecked[0].note}</Note>
           )}
           <Table head={["Row", "Confidence", "Missing", "Correct & confirm"]}>
             {unchecked.slice(0, 40).map((r) => {
@@ -54,7 +52,7 @@ export default async function SupplierPage() {
                   <td className="px-3 py-3">
                     <div className="flex flex-wrap gap-1">
                       {missing.map((m: string) => (
-                        <span key={m} className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">{m}</span>
+                        <span key={m} className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-amber-50 text-amber-800 dark:text-amber-200">{m}</span>
                       ))}
                     </div>
                   </td>
@@ -62,14 +60,14 @@ export default async function SupplierPage() {
                     <form action={correctField} className="flex flex-wrap items-center gap-1.5">
                       <input type="hidden" name="itemId" value={r.id} />
                       <input type="hidden" name="kind" value="supplier" />
-                      <select name="field" className="rounded border border-ink-200 px-1.5 py-1 text-xs dark:border-ink-600 dark:bg-ink-950">
+                      <select name="field" className="rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-1.5 py-1 text-xs">
                         <option value="extracted_spec">Dimensions</option>
                         <option value="extracted_name">Name</option>
                         <option value="extracted_gtin">GTIN</option>
                         <option value="extracted_pack_size">Pack size</option>
                       </select>
                       <input name="value" placeholder="value"
-                        className="w-28 rounded border border-ink-200 px-1.5 py-1 text-xs dark:border-ink-600 dark:bg-ink-950" />
+                        className="w-28 rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-1.5 py-1 text-xs" />
                       <SubmitButton variant="ghost">Save</SubmitButton>
                     </form>
                     <form action={confirmExtraction.bind(null, r.id, "supplier")} className="mt-1.5">
@@ -87,7 +85,7 @@ export default async function SupplierPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">Catalogue</h2>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Catalogue</h2>
         {catalogue.length === 0 ? (
           <Empty>
             No catalogue rows yet —{" "}
@@ -101,7 +99,7 @@ export default async function SupplierPage() {
             {catalogue.slice(0, 200).map((c) => (
               /* The whole row is a link target: a manufacturer opens this page
                  to find one article and fix its price or its picture. */
-              <tr key={c.id} className="group transition hover:bg-brand-50/40 dark:hover:bg-brand-500/5">
+              <tr key={c.id} className="group transition hover:bg-ink-25/60 dark:hover:bg-ink-800/40">
                 <td className="px-3 py-2">
                   <Thumb id={shots.get(c.canonical_product_id)} alt={c.extracted_name} />
                 </td>
@@ -111,10 +109,10 @@ export default async function SupplierPage() {
                     {c.canonical_name ?? c.extracted_name}
                   </Link>
                   {c.canonical_name && c.canonical_name !== c.extracted_name && (
-                    <div className="truncate text-[11px] text-ink-300">read as {c.extracted_name}</div>
+                    <div className="truncate text-[11px] text-ink-400">read as {c.extracted_name}</div>
                   )}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs text-ink-400">{c.extracted_sku}</td>
+                <td className="px-3 py-2 code text-xs text-ink-400">{c.extracted_sku}</td>
                 <td className="px-3 py-2 tnum">
                   {c.base_price != null
                     ? <span className="font-medium">{c.currency ?? "CHF"} {price(c.base_price)}</span>
@@ -122,7 +120,7 @@ export default async function SupplierPage() {
                 </td>
                 <td className="px-3 py-2"><ConfidenceBar value={c.extraction_confidence} threshold={EXTRACTION_THRESHOLD} /></td>
                 <td className="px-3 py-2">
-                  <span className="rounded bg-ink-50 px-1.5 py-0.5 text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">{c.status}</span>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-ink-50 text-ink-600 dark:text-ink-200">{c.status}</span>
                 </td>
               </tr>
             ))}
@@ -137,13 +135,13 @@ export default async function SupplierPage() {
 /** Catalogue thumbnail, or an empty frame so rows keep a constant height. */
 function Thumb({ id, alt }: { id?: string; alt: string }) {
   return (
-    <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-lg border border-ink-50 bg-white dark:border-ink-700 dark:bg-ink-800">
+    <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-lg border hair bg-white dark:bg-ink-800">
       {id ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img src={`/api/product-images/${id}`} alt={alt}
           className="h-full w-full object-contain p-0.5" />
       ) : (
-        <span className="text-[9px] uppercase tracking-wide text-ink-300">none</span>
+        <span className="text-[11px] font-medium text-ink-400">none</span>
       )}
     </div>
   );

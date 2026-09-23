@@ -12,6 +12,8 @@ import type { Orderability } from "@/lib/replacement";
 import { price, num } from "./format";
 import type { ReplacementView, ReplacementPointView, AnalysisStatus, SuggestionView } from "@/lib/queries";
 import { Spinner } from "./OpenProblems";
+import { Stamp, RevMark, Mark, Balloon } from "./marks";
+import { buttonClass, DIALOG } from "./controls";
 
 const POLL_MS = 3000;
 
@@ -63,8 +65,9 @@ export function SuggestionsPoller({ pending }: { pending: boolean }) {
 }
 
 /**
- * The strip above a product's tabs once it has been chosen as a replacement:
- * which line it replaces, and where the analysis of that switch stands.
+ * The status card above a product's tabs once it has been chosen as a
+ * replacement: where the analysis of the switch stands, and ordering once it
+ * is settled. Its glow takes the state's colour.
  */
 export function ReplacementBanner({ view, problemsHref, orderability }: {
   view: ReplacementView; problemsHref: string; orderability?: Orderability | null;
@@ -75,74 +78,71 @@ export function ReplacementBanner({ view, problemsHref, orderability }: {
 
   if (status === "pending" || status === "running") {
     return (
-      <div className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-3.5 dark:border-brand-500/30 dark:bg-brand-500/10"
-        aria-live="polite">
+      <Strip rule="brand" live>
         <Spinner small />
-        <div className="min-w-0 text-sm">
-          <div className="font-semibold text-brand-800 dark:text-brand-100">
-            The match is being calculated
-          </div>
-          <p className="mt-0.5 text-brand-700/80 dark:text-brand-200/80">
-            Replacing <span className="font-medium">{view.lineName}</span> — checking price,
-            replaceability, safety and correctness. The points appear here when it is done.
-          </p>
-        </div>
+        <Stamp tone="brand">Calculating</Stamp>
+        <p className="min-w-0 flex-1 text-sm text-ink-600 dark:text-ink-200">
+          Checking price, replaceability, safety and correctness against{" "}
+          <span className="font-medium text-ink-900 dark:text-ink-50">{view.lineName}</span>. The
+          points appear here when it is done.
+        </p>
         <AnalysisPoller ids={[{ id: view.id, status }]} />
-      </div>
+      </Strip>
     );
   }
 
   if (status === "failed") {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200">
-        <div className="font-semibold">The match for {view.lineName} could not be calculated.</div>
-        {view.error && <div className="mt-0.5 text-xs opacity-80">{view.error}</div>}
+      <Strip rule="danger">
+        <Mark kind="rejected" className="h-3.5 w-3.5" />
+        <Stamp tone="danger">Not calculated</Stamp>
+        <p className="min-w-0 flex-1 text-sm text-ink-700 dark:text-ink-100">
+          The match for {view.lineName} could not be calculated.
+          {view.error && <span className="block text-xs text-ink-400">{view.error}</span>}
+        </p>
         <button disabled={pending} onClick={() => start(async () => {
             await rerunReplacementAction(view.id); router.refresh();
           })}
-          className="mt-2 text-xs font-semibold underline disabled:opacity-40">
+          className={buttonClass("ghost", "sm")}>
           {pending ? "Starting…" : "Try again"}
         </button>
-      </div>
+      </Strip>
     );
   }
 
   const settled = counts.open === 0;
   return (
-    <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3.5 text-sm ${
-      settled
-        ? "border-good-100 bg-good-100/25 dark:border-good-500/40 dark:bg-good-500/10"
+    <Strip rule={settled ? "good" : counts.blockingOpen ? "danger" : "neutral"}>
+      {settled
+        ? <Stamp tone="good">{counts.total ? "Signed off" : "Nothing to settle"}</Stamp>
         : counts.blockingOpen
-          ? "border-rose-200 bg-rose-50/60 dark:border-rose-900/70 dark:bg-rose-950/20"
-          : "border-ink-100 bg-white/70 dark:border-ink-800 dark:bg-ink-900/60"}`}>
-      <div className="min-w-0 flex-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-400">
-          Chosen replacement for
-        </div>
-        <div className="truncate font-medium text-ink-900 dark:text-ink-50">{view.lineName}</div>
-      </div>
-      <div className="text-ink-600 dark:text-ink-200 tnum">
-        {settled ? (
-          <span className="font-semibold text-good-500 dark:text-good-100">
-            {counts.total ? `All ${counts.total} points signed off` : "Nothing to settle"}
-          </span>
-        ) : (
-          <>
-            <span className="font-semibold">{counts.open}</span> open point{counts.open === 1 ? "" : "s"}
-            {counts.blockingOpen > 0 && (
-              <span className="ml-1.5 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                {counts.blockingOpen} blocking
-              </span>
-            )}
-            {counts.signedOff > 0 && <span className="text-ink-400"> · {counts.signedOff} signed off</span>}
-          </>
-        )}
-      </div>
-      <Link href={problemsHref}
-        className="rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:bg-ink-25 dark:border-ink-600 dark:text-ink-100 dark:hover:bg-ink-800">
-        Review points →
-      </Link>
+          ? <Stamp tone="solid-danger">{counts.blockingOpen} blocking</Stamp>
+          : <Stamp tone="neutral">Open</Stamp>}
+      <p className="min-w-0 flex-1 text-sm text-ink-600 tnum dark:text-ink-200">
+        {settled
+          ? counts.total ? `All ${counts.total} points signed off.` : "The analysis raised nothing to settle."
+          : <><span className="font-semibold text-ink-900 dark:text-ink-50">{counts.open}</span> open point{counts.open === 1 ? "" : "s"}
+            {counts.signedOff > 0 && <span className="text-ink-400"> · {counts.signedOff} signed off</span>}</>}
+      </p>
+      <Link href={problemsHref} className={buttonClass("ghost", "sm")}>Review points</Link>
       {orderability && <OrderControl view={view} o={orderability} />}
+    </Strip>
+  );
+}
+
+const GLOW: Record<string, string> = {
+  brand: "shadow-[var(--shadow-glow-strong)]",
+  danger: "shadow-[0_0_0_1px_rgb(244_63_94/0.22),0_10px_36px_-10px_rgb(244_63_94/0.35),0_2px_6px_rgb(20_21_40/0.04)]",
+  good: "shadow-[0_0_0_1px_rgb(16_185_129/0.22),0_10px_36px_-10px_rgb(16_185_129/0.30),0_2px_6px_rgb(20_21_40/0.04)]",
+  neutral: "shadow-[var(--shadow-glow)]",
+};
+
+/** A status card: white, rounded, its glow in the state's colour. The words inside say the state. */
+function Strip({ children, rule, live = false }: { children: React.ReactNode; rule: keyof typeof GLOW; live?: boolean }) {
+  return (
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-2xl bg-[var(--sheet)] px-5 py-3.5 ${GLOW[rule]}`}
+      aria-live={live ? "polite" : undefined}>
+      {children}
     </div>
   );
 }
@@ -167,12 +167,13 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
 
   if (o.order) {
     return (
-      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-2.5 text-xs dark:border-ink-800">
-        <span className="font-semibold text-brand-700 dark:text-brand-200">
-          Ordered · {ORDER_LABEL[o.order.status] ?? o.order.status}
+      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t hair pt-3 text-xs">
+        <span className="inline-flex items-center gap-2">
+          <Stamp tone="brand">Ordered</Stamp>
+          <span className="text-ink-600 dark:text-ink-200">{ORDER_LABEL[o.order.status] ?? o.order.status}</span>
         </span>
         <Link href="/hospital/approvals" className="font-semibold text-brand-600 underline dark:text-brand-300">
-          Open approvals →
+          Open approvals
         </Link>
       </div>
     );
@@ -190,7 +191,7 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
 
   const dearer = o.savingsPct != null && o.savingsPct < 0;
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-2.5 dark:border-ink-800">
+    <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t hair pt-3">
       <span className="min-w-0 text-xs text-ink-500 dark:text-ink-300">
         {o.canOrder
           ? `${o.currency} ${price(o.unitPrice!)} per unit · ${num(o.volume)} a year` +
@@ -199,7 +200,7 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
       </span>
       <button onClick={() => setOpen(true)} disabled={!o.canOrder}
         title={o.canOrder ? undefined : o.reasons.join(" ")}
-        className="rounded-lg bg-brand-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40">
+        className={buttonClass("primary", "sm")}>
         Order this replacement
       </button>
       {open && (
@@ -210,7 +211,7 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
               {view.productName} replaces <span className="font-medium">{view.lineName}</span>,
               sourced direct from {o.supplierName ?? view.manufacturer}.
             </span>
-            <span className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-lg bg-ink-25 px-3 py-2.5 text-xs tnum dark:bg-ink-800">
+            <span className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2.5 text-xs tnum">
               <span className="text-ink-400">Annual volume</span><span className="text-right">{num(o.volume)} units</span>
               <span className="text-ink-400">Unit price</span>
               <span className="text-right">{o.currency} {price(o.unitPrice!)} <span className="text-ink-400">at the pool&apos;s current tier</span></span>
@@ -227,7 +228,7 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
               {view.counts.open > 0 && ` ${view.counts.open} non-blocking point${view.counts.open === 1 ? " is" : "s are"} still open; they do not hold the order up.`}
             </span>
             {error && (
-              <span className="mt-3 block rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-950/40 dark:text-rose-200">
+              <span className="mt-3 block rounded-xl bg-rose-50 shadow-[0_0_0_1px_rgb(244_63_94/0.22)] dark:bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-800 dark:text-rose-200">
                 {error}
               </span>
             )}
@@ -246,7 +247,11 @@ const CATEGORY: Record<string, { label: string; blurb: string }> = {
 };
 const ORDER = ["safety", "replaceability", "price", "correctness", "other"];
 
-/** The Open problems tab for a chosen replacement: the analysis, point by point. */
+/**
+ * The Open problems tab for a chosen replacement: one row per point — its
+ * number, what it says, where it stands, when and by whom it last moved —
+ * grouped by what it is about, in one card.
+ */
 export function ReplacementPoints({ view, productName, canSend, readOnly = false, ordered = false }: {
   view: ReplacementView; productName: string; canSend: boolean;
   /** A suggestion's pre-calculated analysis: nothing is chosen, so nothing is signable. */
@@ -261,7 +266,7 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
 
   if (view.status === "pending" || view.status === "running") {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <div className="panel flex flex-col items-center gap-3 py-14 text-center">
         <Spinner />
         <p className="text-sm font-medium text-ink-600 dark:text-ink-200">
           Calculating the match against {view.lineName}
@@ -277,45 +282,45 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
   const groups = ORDER
     .map((key) => ({ key, points: view.points.filter((p) => (p.category ?? "other") === key) }))
     .filter((g) => g.points.length);
+  // One running number across the groups, so "point 4" means one thing.
+  let rev = 0;
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-ink-50 bg-white/70 px-4 py-3 dark:border-ink-800 dark:bg-ink-900/60">
-        {view.status === "failed" ? (
-          <p className="text-sm text-rose-700 dark:text-rose-300">
-            The analysis failed{view.error ? `: ${view.error}` : "."}
-          </p>
-        ) : (
-          <p className="text-sm text-ink-700 dark:text-ink-100">{view.summary}</p>
-        )}
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-400">
-          {view.verdict && (
-            <>
-              <span className="font-medium uppercase tracking-wide">{view.verdict.replace("_", " ")}</span>
-              <span>·</span><span className="tnum">{view.confidence}% confidence</span><span>·</span>
-            </>
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4">
+          {view.status === "failed" ? (
+            <p className="text-sm text-rose-700 dark:text-rose-300">
+              The analysis failed{view.error ? `: ${view.error}` : "."}
+            </p>
+          ) : (
+            <p className="text-sm leading-relaxed text-ink-700 dark:text-ink-100">{view.summary}</p>
           )}
-          {view.adapter && <span>{view.adapter}</span>}
-          {view.webSearches > 0 && <><span>·</span><span className="tnum">{view.webSearches} web searches</span></>}
-          {view.finishedAt && <><span>·</span><span>{new Date(view.finishedAt).toLocaleString("de-CH")}</span></>}
-          {!readOnly && !ordered && <span className="ml-auto flex gap-3">
+        </div>
+        <div className="flex flex-wrap items-stretch gap-y-1 border-t hair px-2 py-1.5 text-[11px] text-ink-500 dark:text-ink-300">
+          {view.verdict && <Cell label="Verdict"><span className="capitalize">{view.verdict.replace("_", " ")}</span></Cell>}
+          {view.confidence != null && <Cell label="Confidence"><span className="tnum">{view.confidence} %</span></Cell>}
+          {view.adapter && <Cell label="Analysed by">{view.adapter}</Cell>}
+          {view.webSearches > 0 && <Cell label="Web searches"><span className="tnum">{view.webSearches}</span></Cell>}
+          {view.finishedAt && <Cell label="Date"><span className="code">{new Date(view.finishedAt).toLocaleString("de-CH")}</span></Cell>}
+          {!readOnly && !ordered && <span className="ml-auto flex items-center gap-2 px-3 py-2">
             <button disabled={pending} onClick={() => start(async () => {
                 await rerunReplacementAction(view.id); router.refresh();
               })}
-              className="font-semibold text-brand-600 underline disabled:opacity-40 dark:text-brand-300">
+              className={buttonClass("ghost", "sm")}>
               Run again
             </button>
             <button disabled={pending} onClick={() => setWithdrawing(true)}
-              className="font-semibold text-ink-500 underline disabled:opacity-40 dark:text-ink-300">
+              className={buttonClass("danger", "sm")}>
               Withdraw replacement
             </button>
           </span>}
-        </p>
+        </div>
         {withdrawError && (
-          <p className="mt-2 text-xs text-rose-700 dark:text-rose-300">{withdrawError}</p>
+          <p className="border-t hair px-5 py-2 text-xs text-rose-700 dark:text-rose-300">{withdrawError}</p>
         )}
         {view.sources.length > 0 && (
-          <details className="mt-2 text-[11px] text-ink-400">
+          <details className="border-t hair px-5 py-2.5 text-[11px] text-ink-400">
             <summary className="cursor-pointer select-none">
               {view.sources.length} page{view.sources.length === 1 ? "" : "s"} consulted
             </summary>
@@ -333,43 +338,50 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
       </div>
 
       {readOnly && view.points.length > 0 && (
-        <p className="rounded-lg bg-brand-50/70 px-3 py-2 text-xs text-brand-800 dark:bg-brand-500/10 dark:text-brand-100">
-          Calculated in advance, because this is the best match found for {view.lineName}. Choose{" "}
-          <span className="font-semibold">Replace with this</span> to sign these points off or
-          send them to {view.manufacturer} — the analysis is taken over as it is, not run again.
-        </p>
+        <div className="rounded-xl bg-brand-50/70 px-4 py-3 shadow-[0_0_0_1px_rgb(87_89_242/0.14)] dark:bg-brand-500/10">
+          <p className="text-sm leading-relaxed text-brand-900 dark:text-brand-100">
+            Calculated in advance, because this is the best match found for {view.lineName}. Choose{" "}
+            <span className="font-semibold">Replace with this</span> to sign these points off or
+            send them to {view.manufacturer} — the analysis is taken over as it is, not run again.
+          </p>
+        </div>
       )}
 
       {view.points.length === 0 ? (
-        <div className="rounded-xl border border-good-100 bg-good-100/25 px-4 py-6 text-center text-sm text-good-500 dark:border-good-500/40 dark:bg-good-500/10 dark:text-good-100">
-          Nothing stands out. The analysis found no issue with this switch.
+        <div className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50/70 px-4 py-7 text-sm font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
+          <Mark kind="done" className="h-3.5 w-3.5" /> Nothing stands out. The analysis found no issue with this switch.
         </div>
       ) : (
-        <>
+        <div className="card overflow-hidden">
           {view.counts.blockingOpen > 0 && (
-            <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
-              {view.counts.blockingOpen} blocking — this replacement should not be ordered until
-              they are signed off. A manufacturer&apos;s answer still needs your sign-off.
+            <p className="flex items-center gap-2 border-b hair bg-rose-50/60 px-5 py-3 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
+              <Stamp tone="solid-danger">{view.counts.blockingOpen} blocking</Stamp>
+              Should not be ordered until signed off. A manufacturer&apos;s answer still needs your sign-off.
             </p>
           )}
+          {/* Column heads. */}
+          <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_9.5rem] gap-x-4 border-b hair px-5 py-3 md:grid">
+            <span className="label">#</span>
+            <span className="label">Point</span>
+            <span className="label">Status</span>
+          </div>
           {groups.map((g) => (
             <section key={g.key}>
-              <h3 className="flex items-baseline gap-2 text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-300">
-                {CATEGORY[g.key].label}
-                <span className="font-normal normal-case tracking-normal text-ink-300">
-                  {CATEGORY[g.key].blurb}
-                </span>
+              <h3 className="flex items-baseline gap-2 border-b hair bg-ink-25/70 px-5 py-2 dark:bg-ink-900/60">
+                <span className="text-[0.82rem] font-bold text-ink-800 dark:text-ink-100">{CATEGORY[g.key].label}</span>
+                <span className="text-xs text-ink-400">{CATEGORY[g.key].blurb}</span>
               </h3>
-              <ul className="mt-2 space-y-2.5">
+              <ol className="divide-y divide-[var(--line)] border-b hair last:border-b-0">
                 {g.points.map((p) => (
-                  <Point key={p.id} p={p} productName={productName} canSend={canSend}
+                  <Point key={p.id} n={++rev} p={p} productName={productName} canSend={canSend}
                     manufacturer={view.manufacturer} readOnly={readOnly}
+                    raisedAt={view.finishedAt} adapter={view.adapter}
                     onDone={() => router.refresh()} />
                 ))}
-              </ul>
+              </ol>
             </section>
           ))}
-        </>
+        </div>
       )}
 
       {withdrawing && (
@@ -391,14 +403,39 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
   );
 }
 
-function Point({ p, productName, manufacturer, canSend, readOnly, onDone }: {
-  p: ReplacementPointView; productName: string; manufacturer: string; canSend: boolean;
-  readOnly: boolean; onDone: () => void;
+function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <span className="px-3 py-1.5">
+      <span className="label block text-[11px]">{label}</span>
+      <span className="mt-0.5 block text-[12px] text-ink-700 dark:text-ink-100">{children}</span>
+    </span>
+  );
+}
+
+/** Where a point stands, as the phase stamp in its revision row. */
+function phase(p: ReplacementPointView): { word: string; tone: "danger" | "neutral" | "brand" | "good" | "warn" } {
+  if (p.status === "cleared") return { word: "Signed off", tone: "good" };
+  if (p.status === "answered") return { word: "Answered", tone: "brand" };
+  if (p.sentAt) return { word: "With manufacturer", tone: "brand" };
+  if (p.severity === "blocking") return { word: "Blocking", tone: "danger" };
+  return { word: "Open", tone: "neutral" };
+}
+
+function Point({ n, p, productName, manufacturer, canSend, readOnly, raisedAt, adapter, onDone }: {
+  n: number; p: ReplacementPointView; productName: string; manufacturer: string; canSend: boolean;
+  readOnly: boolean; raisedAt: string | null; adapter: string | null; onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const signedOff = p.status === "cleared";
   const blocking = p.severity === "blocking" && !signedOff;
+  const ph = phase(p);
+  // The last thing that happened to the point, and who did it.
+  const moved = signedOff
+    ? { at: p.clearedAt, by: p.clearedBy ?? "Hospital" }
+    : p.status === "answered" ? { at: p.sentAt, by: manufacturer }
+    : p.sentAt ? { at: p.sentAt, by: "sent by you" }
+    : { at: raisedAt, by: adapter ? "analysis" : "raised" };
 
   const act = (fn: (id: string) => Promise<void>) => {
     setBusy(true);
@@ -406,77 +443,53 @@ function Point({ p, productName, manufacturer, canSend, readOnly, onDone }: {
   };
 
   return (
-    <li className={`rounded-2xl border p-4 ${
-      signedOff
-        ? "border-ink-50 bg-ink-25/60 dark:border-ink-800 dark:bg-ink-900/30"
-        : blocking
-          ? "border-rose-200 bg-rose-50/50 dark:border-rose-900/70 dark:bg-rose-950/20"
-          : "border-ink-100 bg-white/70 dark:border-ink-800 dark:bg-ink-900/60"}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <div className={`min-w-0 flex-1 ${signedOff ? "opacity-70" : ""}`}>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              p.severity === "blocking" && !signedOff
-                ? "bg-rose-600 text-white"
-                : "bg-ink-100 text-ink-600 dark:bg-ink-700 dark:text-ink-200"}`}>
-              {p.severity === "blocking" ? "Blocking" : "For information"}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-ink-400">
-              {p.routedTo === "supplier" ? "manufacturer can clarify" : "your decision"}
-            </span>
-            {p.sentAt && p.status !== "answered" && (
-              <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
-                sent to {manufacturer}
-              </span>
-            )}
-            {p.status === "answered" && (
-              <span className="rounded bg-good-100/60 px-1.5 py-0.5 text-[10px] font-semibold text-good-500 dark:bg-good-500/15 dark:text-good-100">
-                answered
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-sm font-semibold text-ink-900 dark:text-ink-50">{p.title ?? p.text}</p>
-          {p.detail && (
-            <p className="mt-1 text-sm leading-relaxed text-ink-600 dark:text-ink-200">{p.detail}</p>
-          )}
-          {p.sources.length > 0 && (
-            <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
-              {p.sources.map((s) => (
-                <a key={s.url} href={s.url} target="_blank" rel="noreferrer noopener" title={s.title}
-                  className="text-brand-600 hover:underline dark:text-brand-300">
-                  {host(s.url)} ↗
-                </a>
-              ))}
-            </p>
-          )}
-          {p.answerText && (
-            <p className="mt-2 rounded-lg bg-good-100/40 px-3 py-2 text-sm text-good-500 dark:bg-good-500/10 dark:text-good-100">
-              <span className="font-semibold">{manufacturer}: </span>{p.answerText}
-            </p>
-          )}
-          {signedOff && (
-            <p className="mt-2 text-[11px] text-ink-400">
-              Signed off{p.clearedBy ? ` by ${p.clearedBy}` : ""}
-              {p.clearedAt ? ` · ${new Date(p.clearedAt).toLocaleString("de-CH")}` : ""}
-            </p>
-          )}
-        </div>
-
-        {!signedOff && !readOnly && (
-          <div className="flex shrink-0 gap-2 sm:flex-col sm:gap-1.5">
-            <button onClick={() => setConfirming(true)} disabled={busy}
-              className="flex-1 rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-semibold text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 sm:flex-none dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
-              Sign off
-            </button>
-            <button onClick={() => act(sendProblemAction)}
-              disabled={busy || Boolean(p.sentAt) || !canSend}
-              title={!canSend ? "This product has no manufacturer on the platform to ask" : undefined}
-              className="flex-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:opacity-40 sm:flex-none">
-              {p.sentAt ? "Sent" : "Send to supplier"}
-            </button>
+    <li className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 px-5 py-4 md:grid-cols-[2.5rem_minmax(0,1fr)_9.5rem] md:items-start`}>
+      <span className="pt-0.5"><Balloon n={n} blocking={blocking} /></span>
+      <div className={`min-w-0 ${signedOff ? "text-ink-500" : ""}`}>
+        <p className={`text-sm font-semibold ${signedOff ? "text-ink-600 dark:text-ink-300" : "text-ink-900 dark:text-ink-50"}`}>{p.title ?? p.text}</p>
+        {p.detail && (
+          <p className="mt-1 max-w-[70ch] text-sm leading-relaxed text-ink-600 dark:text-ink-200">{p.detail}</p>
+        )}
+        <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
+          <span className="label">{p.routedTo === "supplier" ? "Manufacturer can clarify" : "Your decision"}</span>
+          {p.sources.map((s) => (
+            <a key={s.url} href={s.url} target="_blank" rel="noreferrer noopener" title={s.title}
+              className="text-brand-600 hover:underline dark:text-brand-300">
+              {host(s.url)}
+            </a>
+          ))}
+        </p>
+        {p.answerText && (
+          <div className="mt-2.5 rounded-xl bg-brand-50/70 px-3.5 py-2.5 text-sm leading-relaxed text-ink-700 dark:bg-brand-500/10 dark:text-ink-100">
+            <span className="mr-1.5 font-bold text-brand-700 dark:text-brand-200">{manufacturer}</span>{p.answerText}
           </div>
         )}
+        {/* Folded columns, below md. */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-ink-400 md:hidden">
+          <Stamp tone={ph.tone}>{ph.word}</Stamp>
+          {moved.at && <span className="code">{new Date(moved.at).toLocaleDateString("de-CH")}</span>}
+          <span>{moved.by}</span>
+        </div>
       </div>
+      <span className="hidden space-y-1 pt-0.5 text-[12px] leading-snug text-ink-500 md:block dark:text-ink-300">
+        <Stamp tone={ph.tone}>{ph.word}</Stamp>
+        {moved.at && <span className="code block pt-1">{new Date(moved.at).toLocaleDateString("de-CH")}</span>}
+        <span className="block truncate" title={moved.by}>{moved.by}</span>
+      </span>
+
+      {!signedOff && !readOnly ? (
+        <div className="col-start-2 flex flex-wrap gap-2">
+          <button onClick={() => setConfirming(true)} disabled={busy} className={buttonClass("ghost", "sm")}>
+            Sign off
+          </button>
+          <button onClick={() => act(sendProblemAction)}
+            disabled={busy || Boolean(p.sentAt) || !canSend}
+            title={!canSend ? "This product has no manufacturer on the platform to ask" : undefined}
+            className={buttonClass("ghost", "sm")}>
+            {p.sentAt ? "Sent" : "Send to supplier"}
+          </button>
+        </div>
+      ) : null}
 
       {confirming && (
         <ConfirmDialog
@@ -485,8 +498,9 @@ function Point({ p, productName, manufacturer, canSend, readOnly, onDone }: {
             You are recording that the hospital accepts {productName} as a replacement despite
             this point. It stays on record with your name and the time, and is not sent to{" "}
             {manufacturer}.
-            <span className="mt-3 block rounded-lg bg-ink-25 px-3 py-2 text-xs leading-relaxed text-ink-600 dark:bg-ink-800 dark:text-ink-200">
-              {p.title ?? p.text}
+            <span className="mt-3 flex gap-2.5 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2 text-xs leading-relaxed text-ink-700 dark:text-ink-100">
+              <Balloon n={n} blocking={blocking} />
+              <span>{p.title ?? p.text}</span>
             </span>
             {p.category === "safety" && (
               <span className="mt-3 block text-xs font-semibold text-rose-700 dark:text-rose-300">
@@ -513,19 +527,14 @@ function ConfirmDialog({ title, body, confirmLabel, danger = false, busy = false
   }, [busy, onCancel]);
 
   return createPortal((
-    <div role="dialog" aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-ink-950/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-ink-100 bg-white p-6 shadow-xl dark:border-ink-700 dark:bg-ink-900">
-        <h2 className="text-base font-semibold text-ink-950 dark:text-white">{title}</h2>
-        <div className="mt-2 text-sm text-ink-500 dark:text-ink-300">{body}</div>
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onCancel} disabled={busy}
-            className="rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition hover:bg-ink-25 disabled:opacity-40 dark:border-ink-600 dark:text-ink-200 dark:hover:bg-ink-800">
-            Cancel
-          </button>
+    <div role="dialog" aria-modal="true" aria-label={title} className={DIALOG.scrim}>
+      <div className={DIALOG.panel}>
+        <h2 className={`${DIALOG.head} text-base font-semibold text-ink-950 dark:text-white`}>{title}</h2>
+        <div className={DIALOG.body}>{body}</div>
+        <div className={DIALOG.foot}>
+          <button onClick={onCancel} disabled={busy} className={buttonClass("ghost")}>Cancel</button>
           <button onClick={onConfirm} disabled={busy}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-40 ${
-              danger ? "bg-rose-600 hover:bg-rose-700" : "bg-brand-500 hover:bg-brand-600"}`}>
+            className={danger ? `${buttonClass("primary")} !bg-rose-600 hover:!bg-rose-700` : buttonClass("primary")}>
             {busy ? "Saving…" : confirmLabel}
           </button>
         </div>
@@ -539,8 +548,10 @@ function host(url: string): string {
 }
 
 /**
- * The strip above a product that the suggestion pipeline matched to one of the
- * hospital's lines, before anyone chose it.
+ * The card above a product that the suggestion pipeline matched to one of
+ * the hospital's lines, before anyone chose it: why the platform matched it
+ * — in full, since the rationale is the thing a buyer checks — and how far
+ * the analysis got. It glows violet, the colour of a substitute.
  */
 export function SuggestionBanner({ view, problemsHref }: {
   view: SuggestionView; problemsHref: string;
@@ -548,38 +559,31 @@ export function SuggestionBanner({ view, problemsHref }: {
   const a = view.analysis;
   const analysing = a?.status === "pending" || a?.status === "running";
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-violet-200 bg-violet-50/60 px-4 py-3.5 text-sm dark:border-violet-500/30 dark:bg-violet-500/10">
-      <div className="min-w-0 flex-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-200">
-          Suggested {view.relation === "identical" ? "as the same article" : "as a substitute"} for
-        </div>
-        <div className="truncate font-medium text-ink-900 dark:text-ink-50">{view.lineName}</div>
-        <p className="mt-0.5 line-clamp-2 text-xs text-ink-500 dark:text-ink-300">
-          {view.confidence}% · {view.rationale}
-        </p>
+    <div className="overflow-hidden rounded-2xl bg-[var(--sheet)] shadow-[0_0_0_1px_rgb(139_92_246/0.18),0_12px_40px_-12px_rgb(124_88_246/0.40),0_2px_6px_rgb(20_21_40/0.04)]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 bg-gradient-to-r from-violet-50/80 via-brand-50/50 to-transparent px-5 py-3 dark:from-violet-500/10 dark:via-brand-500/5">
+        {view.relation === "identical" ? <Stamp tone="brand">Same article</Stamp> : <Stamp tone="violet">Substitute</Stamp>}
+        <Stamp tone="neutral">Suggested</Stamp>
+        <span className="text-xs text-ink-500 tnum dark:text-ink-300">{view.confidence} % match</span>
+        <span className="ml-auto flex items-center gap-3">
+          {analysing ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-600 dark:text-ink-200">
+              <Spinner small /> Analysing the switch…
+            </span>
+          ) : a?.status === "done" ? (
+            <span className="inline-flex items-center gap-2 text-xs tnum text-ink-600 dark:text-ink-200">
+              <span><span className="font-semibold">{a.counts.total}</span> point{a.counts.total === 1 ? "" : "s"}</span>
+              {a.counts.blockingOpen > 0 && <Stamp tone="solid-danger">{a.counts.blockingOpen} blocking</Stamp>}
+            </span>
+          ) : null}
+          {a?.status === "done" && (
+            <Link href={problemsHref} className={buttonClass("ghost", "sm")}>See points</Link>
+          )}
+        </span>
       </div>
-      <div className="text-ink-600 dark:text-ink-200">
-        {analysing ? (
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-            <Spinner small /> Analysing the switch…
-          </span>
-        ) : a?.status === "done" ? (
-          <span className="text-xs tnum">
-            <span className="font-semibold">{a.counts.total}</span> point{a.counts.total === 1 ? "" : "s"}
-            {a.counts.blockingOpen > 0 && (
-              <span className="ml-1.5 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                {a.counts.blockingOpen} blocking
-              </span>
-            )}
-          </span>
-        ) : null}
+      <div className="flex items-start gap-3 px-5 py-3.5">
+        <span className="label shrink-0 pt-[2px]">Why</span>
+        <p className="max-w-[80ch] text-sm leading-relaxed text-ink-700 dark:text-ink-100">{view.rationale}</p>
       </div>
-      {a?.status === "done" && (
-        <Link href={problemsHref}
-          className="rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-ink-700 dark:bg-ink-50 dark:text-ink-900 dark:hover:bg-white">
-          See points →
-        </Link>
-      )}
       <SuggestionsPoller pending={analysing} />
     </div>
   );

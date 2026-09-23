@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import { Page, Table, Empty, RiskBadge, chf, num } from "@/app/components/ui";
+import { Page, Note, Table, Empty, RiskBadge, chf, num } from "@/app/components/ui";
 import { TierEditor } from "@/app/components/TierEditor";
 import { pricingRows, tiersBySupplier } from "@/lib/queries";
 import { currentSupplier } from "@/lib/session";
@@ -20,11 +20,11 @@ export default async function Pricing() {
       lead="What each of your products costs. A PDF catalogue carries no prices and the platform will not invent one, so a product arrives unpriced: listed and matchable, but not quotable to a hospital until you set something here. A price can be one figure at every quantity, or a ladder of volume breaks.">
 
       {unpriced > 0 && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-          <strong>{unpriced}</strong> of {products.length} products have no price. Hospitals can
+        <Note tone="warn" label="Unpriced">
+          <strong className="tnum">{unpriced}</strong> of {products.length} products have no price. Hospitals can
           find and match them, but no saving is claimed and they cannot be ordered until you set
           one.
-        </div>
+        </Note>
       )}
 
       {products.length === 0 ? (
@@ -46,10 +46,10 @@ export default async function Pricing() {
                   <div className="text-xs text-ink-400">per {p.base_uom} · {p.linked_items} catalogue row(s)</div>
                 </td>
                 <td className="px-3 py-3">
-                  <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${
                     tiers.length === 0
-                      ? "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                      : "bg-good-100/50 text-good-500 dark:bg-good-500/15 dark:text-good-100"}`}>
+                      ? "bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200"
+                      : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200"}`}>
                     {tiers.length === 0 ? "no price yet"
                       : tiers[0].origin === "catalogue" ? "from your catalogue" : "set by you"}
                   </span>

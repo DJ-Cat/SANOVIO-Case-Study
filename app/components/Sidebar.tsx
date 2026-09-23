@@ -12,8 +12,10 @@ export interface NavItem {
 
 const EASE = "duration-300 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none";
 
-export function Sidebar({ portal, subtitle, items, accent }: {
+export function Sidebar({ portal, subtitle, items, accent, demo = false }: {
   portal: string; subtitle: string; items: NavItem[]; accent: string;
+  /** The demo edition, on its filled database: said on every page, so nobody mistakes it for the clean one. */
+  demo?: boolean;
 }) {
   // `null` is the pre-hydration state: the server cannot know the viewport, so
   // the first paint is decided by CSS alone — rail out on desktop, drawer away
@@ -26,10 +28,11 @@ export function Sidebar({ portal, subtitle, items, accent }: {
     .filter((it) => pathname === it.href || (it.href !== "/" && pathname.startsWith(it.href + "/")))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
 
-  const rail = open === null ? "-translate-x-full lg:translate-x-0"
+  // Off-screen by its own width plus the gap it floats in and its glow.
+  const rail = open === null ? "-translate-x-[calc(100%+2rem)] lg:translate-x-0"
     : open ? "translate-x-0"
-    : "-translate-x-full";
-  const spacer = open === false ? "lg:w-0" : "lg:w-64";
+    : "-translate-x-[calc(100%+2rem)]";
+  const spacer = open === false ? "lg:w-0" : "lg:w-[16.5rem]";
 
   return (
     <>
@@ -39,28 +42,37 @@ export function Sidebar({ portal, subtitle, items, accent }: {
 
       <button
         onClick={() => setOpen((v) => !(v ?? true))}
-        aria-label={open === false ? "Open menu" : "Close menu"}
+        aria-label={open === false ? "Show menu" : "Hide menu"}
         aria-expanded={open !== false}
-        className="fixed left-3 top-3 z-50 grid h-9 w-9 place-items-center rounded-lg border border-ink-100 bg-white/90 text-ink-700 shadow-sm backdrop-blur transition hover:bg-ink-25 dark:border-ink-700 dark:bg-ink-900/90 dark:text-ink-100 dark:hover:bg-ink-800"
+        className="fixed left-5 top-5 z-50 grid h-9 w-9 place-items-center rounded-xl bg-white text-ink-600 shadow-[0_0_0_1px_var(--line-strong),0_4px_14px_-6px_rgb(40_42_120/0.25)] transition hover:text-brand-600 dark:bg-ink-900 dark:text-ink-200"
       >
-        <Bars open={open !== false} />
+        {/* Phones: bars that fold into an X, because the drawer covers the
+            page. Desktop: a panel glyph that collapses the rail beside it. */}
+        <span className="lg:hidden"><Bars open={open === true} /></span>
+        <span className="hidden lg:block"><PanelGlyph collapsed={open === false} /></span>
       </button>
 
       {open === true && (
         <div onClick={() => setOpen(false)}
-          className="fixed inset-0 z-30 bg-ink-950/40 backdrop-blur-sm lg:hidden" />
+          className="fixed inset-0 z-30 bg-ink-950/30 backdrop-blur-[2px] lg:hidden" />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-ink-50 bg-white/80 backdrop-blur-xl transition-transform dark:border-ink-800 dark:bg-ink-900/80 ${EASE} ${rail}`}>
+      {/* The rail: a white card floating off the page edge, as the site's nav bar floats. */}
+      <aside className={`fixed inset-y-3 left-3 z-40 flex w-[15.25rem] flex-col rounded-3xl bg-[var(--sheet)] shadow-[0_0_0_1px_rgb(87_89_242/0.10),0_20px_50px_-20px_rgb(40_42_120/0.30)] transition-transform ${EASE} ${rail}`}>
 
-        <div className="px-4 pb-3 pt-14">
-          <div className={`truncate text-[11px] font-semibold uppercase tracking-wider ${accent}`}>
-            {portal}
-          </div>
-          <div className="mt-1 text-xs text-ink-400">{subtitle}</div>
+        <div className="flex h-14 flex-col items-end justify-center gap-1 px-4 pl-16">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/sanovio-logo.svg" alt="SANOVIO" width={98} height={12} className="h-3 w-auto dark:brightness-[1.35]" />
+          {demo && <DemoBadge />}
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 pb-4">
+        {/* Whose workspace this is. */}
+        <div className="panel mx-3 mb-3 px-3.5 py-3">
+          <div className={`text-[0.78rem] font-bold ${accent}`}>{portal}</div>
+          <div className="mt-0.5 text-[0.8rem] leading-snug text-ink-600 dark:text-ink-200">{subtitle}</div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label={portal}>
           <ul className="space-y-0.5">
             {items.map((it) => {
               // One item lit, the most specific one that matches: the portal
@@ -70,14 +82,15 @@ export function Sidebar({ portal, subtitle, items, accent }: {
               return (
                 <li key={it.href}>
                   <Link href={it.href} onClick={() => { if (window.innerWidth < 1024) setOpen(false); }}
-                    className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition ${
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.9rem] transition ${
                       active
-                        ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-200"
-                        : "text-ink-600 hover:bg-ink-25 dark:text-ink-300 dark:hover:bg-ink-800"}`}>
+                        ? "bg-brand-50 font-bold text-brand-700 shadow-[0_0_0_1px_rgb(87_89_242/0.12)] dark:bg-brand-500/15 dark:text-brand-100"
+                        : "font-medium text-ink-600 hover:bg-ink-25 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800/60 dark:hover:text-ink-50"}`}>
                     <span className="min-w-0 flex-1 truncate">{it.label}</span>
                     {it.badge ? (
-                      <span className={`shrink-0 rounded-full px-1.5 text-[11px] font-semibold tnum ${
-                        it.tone === "unread" ? "bg-brand-500 text-white" : "bg-amber-400 text-amber-950"}`}
+                      <span className={`grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[10.5px] font-bold tnum ${
+                        it.tone === "unread" ? "bg-brand-500 text-white" : "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200"}`}
                         aria-label={it.tone === "unread" ? `${it.badge} unread` : undefined}>
                         {it.badge}
                       </span>
@@ -89,9 +102,10 @@ export function Sidebar({ portal, subtitle, items, accent }: {
           </ul>
         </nav>
 
-        <div className="border-t border-ink-50 px-4 py-3 text-[11px] leading-relaxed text-ink-400 dark:border-ink-800">
-          <Link href="/" className="font-medium text-ink-500 hover:text-brand-600 dark:text-ink-300">
-            ← Switch portal
+        <div className="px-3 pb-3">
+          <Link href="/" className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink-400 transition hover:bg-ink-25 hover:text-brand-600 dark:hover:bg-ink-800/60">
+            <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden><path d="M10 3.5L5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Switch portal
           </Link>
         </div>
       </aside>
@@ -108,6 +122,27 @@ function Bars({ open }: { open: boolean }) {
       <span className={`${bar} ${open ? "top-1/2 -translate-y-1/2 rotate-45" : "top-[4.2px]"}`} />
       <span className={`${bar} top-1/2 -translate-y-1/2 ${open ? "scale-x-0 opacity-0" : "opacity-100"}`} />
       <span className={`${bar} ${open ? "top-1/2 -translate-y-1/2 -rotate-45" : "top-[12.2px]"}`} />
+    </span>
+  );
+}
+
+/** A panel with its side column: the column shaded while the rail is shown. */
+function PanelGlyph({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg viewBox="0 0 18 18" className="h-[17px] w-[17px]" aria-hidden>
+      <rect x="1.5" y="2.5" width="15" height="13" rx="3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M6.5 2.5v13" stroke="currentColor" strokeWidth="1.4" />
+      {!collapsed && <rect x="3" y="4.5" width="2" height="9" rx="1" fill="currentColor" opacity="0.55" />}
+    </svg>
+  );
+}
+
+/** Marks the demo edition: its data is sample data, reset with `npm run demo:reset`. */
+export function DemoBadge() {
+  return (
+    <span title="Demo edition — sample data. Reset it any time with npm run demo:reset."
+      className="rounded-full bg-amber-100 px-2 py-[1px] text-[10.5px] font-bold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+      Demo data
     </span>
   );
 }

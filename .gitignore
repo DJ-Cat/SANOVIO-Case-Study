@@ -1,11 +1,15 @@
 node_modules/
 .next/
+.next-demo/
 out/
 *.tsbuildinfo
 next-env.d.ts
 .env
 .env.local
 db/*.db
+# The demo edition's starting point ships with the repo, so a fresh checkout
+# can run `npm run demo` and see the platform filled. See scripts/demo.ts.
+!db/demo-snapshot.db
 db/*.db-journal
 db/*.db-shm
 db/*.db-wal

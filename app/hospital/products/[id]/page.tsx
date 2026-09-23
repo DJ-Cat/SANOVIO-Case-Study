@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Page, RiskBadge, price, num } from "@/app/components/ui";
+import {
+  Page, Section, Cells, Callout, Empty, Stamp, Mark, RevMark, RiskBadge, SavingsBadge, price, num,
+  buttonClass, type MarkKind,
+} from "@/app/components/ui";
 import { OpenProblems } from "@/app/components/OpenProblems";
+import { dimensionLabel, dimensionValue, isIdentifier } from "@/app/components/format";
 import { ProductShot } from "@/app/components/ProductShot";
 import { ReplaceWithThis } from "@/app/components/ReplaceWithThis";
 import { replacementOrderability } from "@/lib/replacement";
@@ -51,7 +55,15 @@ export default async function ProductPage(
     : null;
 
   return (
-    <Page title={product.name} lead={`${product.manufacturer} · direct from the manufacturer`}
+    <Page title={product.name}
+      fields={[
+        { label: "Manufacturer", value: product.manufacturer },
+        { label: "Risk class", value: <RiskBadge cls={product.mdrClass} /> },
+        { label: "Unit", value: <>per {product.uom}{product.packSize > 1 ? <span className="text-ink-400"> · {product.packSize} per pack</span> : ""}</> },
+        ...(product.gtin ? [{ label: "GTIN", value: <span className="code text-[0.85rem]">{product.gtin}</span> }] : []),
+        // What this product is being weighed against: the buyer's own line.
+        ...(line ? [{ label: replacement ? "Replacing" : suggestion ? "Suggested for" : "Compared with", value: <span title={line.name}>{line.name}</span> }] : []),
+      ]}
       action={
         <ReplaceWithThis canonicalId={id} productName={product.name}
           manufacturer={product.manufacturer} options={replacementOptions(id)}
@@ -70,61 +82,52 @@ export default async function ProductPage(
           images={productImages(id)} />
 
         <div className="min-w-0 space-y-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <RiskBadge cls={product.mdrClass} />
-            <span className="rounded-full bg-ink-50 px-2 py-0.5 text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
-              per {product.uom}{product.packSize > 1 ? ` · ${product.packSize}/pack` : ""}
-            </span>
-            {product.gtin && (
-              <span className="rounded-full bg-ink-50 px-2 py-0.5 font-mono text-[11px] text-ink-500 dark:bg-ink-800 dark:text-ink-300">
-                GTIN {product.gtin}
-              </span>
-            )}
-          </div>
-
           {/* Price, or the honest absence of one. */}
-          <div className="rounded-2xl border border-ink-50 bg-white/70 p-5 dark:border-ink-800 dark:bg-ink-900/60">
-            {product.basePrice == null ? (
-              <>
-                <div className="text-lg font-semibold text-ink-500 dark:text-ink-300">
-                  No price published
+          {product.basePrice == null ? (
+            <div className="card px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="label">Direct price</span>
+                <span className="font-bold text-ink-700 dark:text-ink-100">Not published</span>
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-ink-500 dark:text-ink-300">
+                {product.manufacturer}&apos;s catalogue carried no prices, and the platform does not
+                estimate them. The product is matchable; a quote follows once the manufacturer sets
+                a price.
+              </p>
+            </div>
+          ) : (
+            <Cells cols={3}>
+              <div className="px-5 py-4">
+                <div className="label">Direct price</div>
+                <div className="mt-1.5 text-[1.5rem] font-bold tracking-[-0.01em] leading-none tnum text-ink-950 dark:text-white">
+                  <span className="text-sm font-medium text-ink-400">{product.currency} </span>{price(product.basePrice)}
                 </div>
-                <p className="mt-1 text-sm text-ink-400">
-                  {product.manufacturer}&apos;s catalogue carried no prices, and the platform does
-                  not estimate them. The product is matchable; a quote follows once the
-                  manufacturer sets a price.
-                </p>
-              </>
-            ) : (
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                <div>
-                  <div className="text-[11px] uppercase tracking-wide text-ink-400">
-                    Direct price
-                  </div>
-                  <div className="text-2xl font-bold tnum text-ink-950 dark:text-white">
-                    {product.currency} {price(product.basePrice)}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-ink-400">
-                    {product.priceOrigin === "catalogue" ? "stated in the catalogue" : "set by the manufacturer"}
-                  </div>
+                <div className="mt-1.5 text-xs text-ink-400">
+                  {product.priceOrigin === "catalogue" ? "stated in the catalogue" : "set by the manufacturer"}
                 </div>
-                {line?.currentPrice != null && (
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-ink-400">You pay today</div>
-                    <div className="text-2xl font-bold tnum text-ink-400 line-through">
-                      {product.currency} {price(line.currentPrice)}
-                    </div>
-                  </div>
-                )}
-                {saving != null && saving > 0 && (
-                  <div className="rounded-2xl bg-gradient-to-br from-brand-500 to-good-500 px-4 py-3 text-center text-white shadow-[0_8px_18px_-6px_rgba(86,89,251,.55)]">
-                    <div className="text-xl font-extrabold leading-none tnum">{saving.toFixed(0)}%</div>
-                    <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wider opacity-90">off</div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="label">You pay today</div>
+                <div className="mt-1.5 text-[1.5rem] font-bold leading-none tnum text-ink-400">
+                  {line?.currentPrice != null
+                    ? <span className="line-through decoration-ink-300 decoration-1">{price(line.currentPrice)}</span>
+                    : <span className="text-base font-semibold">Not on file</span>}
+                </div>
+                <div className="mt-1.5 text-xs text-ink-400">{line ? `for ${line.name}` : "no line to compare against"}</div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="label">Saving</div>
+                <div className="mt-1.5">
+                  {saving != null && saving > 0 ? <SavingsBadge pct={saving} /> : saving == null ? <SavingsBadge pct={null} /> : <span className="text-sm text-ink-500">none — dearer than today</span>}
+                </div>
+                {saving != null && saving > 0 && line && product.basePrice != null && line.currentPrice != null && (
+                  <div className="mt-1.5 text-xs text-ink-400 tnum">
+                    about {product.currency} {num((line.currentPrice - product.basePrice) * line.annualVolume * (line.packSize || 1))} a year
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </Cells>
+          )}
 
           <Tabs id={id} item={line?.id ?? null} active={active}
             problems={replacement?.status === "done" ? replacement.counts.open
@@ -147,10 +150,10 @@ export default async function ProductPage(
             <OpenProblems itemId={line.id} canonicalId={id}
               itemName={line.name} productName={product.name} />
           ) : (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-6 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            <Empty>
               There is nothing to compare this against yet. Upload your article master, or open
               this product from a suggestion, and the comparison will name the line it replaces.
-            </div>
+            </Empty>
           )}
         </div>
       </div>
@@ -158,29 +161,27 @@ export default async function ProductPage(
   );
 }
 
+/** The product's two views, as a segmented pill control. */
 function Tabs({ id, item, active, problems }: {
   id: string; item: string | null; active: string; problems: number | null;
 }) {
   const q = item ? `&item=${item}` : "";
   const cls = (on: boolean) =>
-    `rounded-lg px-3.5 py-2 text-sm font-medium transition ${
-      on ? "bg-ink-900 text-white dark:bg-ink-50 dark:text-ink-900"
-         : "text-ink-500 hover:bg-ink-25 dark:text-ink-300 dark:hover:bg-ink-800"}`;
+    `inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm transition ${
+      on ? "bg-white font-bold text-ink-950 shadow-[0_0_0_1px_rgb(87_89_242/0.10),0_2px_8px_-2px_rgb(40_42_120/0.18)] dark:bg-ink-800 dark:text-white"
+         : "font-semibold text-ink-500 hover:text-ink-900 dark:text-ink-300 dark:hover:text-ink-50"}`;
   return (
-    <div className="flex gap-1.5 border-b border-ink-50 pb-3 dark:border-ink-800">
-      <Link href={`/hospital/products/${id}?tab=overview${q}`} className={cls(active === "overview")}>
+    <nav className="inline-flex gap-1 rounded-xl bg-ink-50 p-1 dark:bg-ink-900" aria-label="Product views">
+      <Link href={`/hospital/products/${id}?tab=overview${q}`} className={cls(active === "overview")}
+        aria-current={active === "overview" ? "page" : undefined}>
         Overview
       </Link>
-      <Link href={`/hospital/products/${id}?tab=problems${q}`} className={cls(active === "problems")}>
+      <Link href={`/hospital/products/${id}?tab=problems${q}`} className={cls(active === "problems")}
+        aria-current={active === "problems" ? "page" : undefined}>
         Open problems
-        {problems != null && problems > 0 && (
-          <span className={`ml-1.5 rounded-full px-1.5 text-[11px] font-semibold tnum ${
-            active === "problems" ? "bg-white/20" : "bg-ink-100 text-ink-600 dark:bg-ink-700 dark:text-ink-200"}`}>
-            {problems}
-          </span>
-        )}
+        {problems != null && problems > 0 && <RevMark n={problems} title={`${problems} open`} />}
       </Link>
-    </div>
+    </nav>
   );
 }
 
@@ -192,49 +193,56 @@ function Overview({ product, line, recId, replacements }: {
 }) {
   const attrs = Object.entries(product.attributes);
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       {line && (
-        <div className="rounded-2xl border border-ink-50 bg-white/70 p-5 dark:border-ink-800 dark:bg-ink-900/60">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
-            Replaces, from your article master
-          </h2>
-          <p className="mt-2 font-medium text-ink-900 dark:text-ink-50">{line.name}</p>
-          <p className="mt-0.5 text-sm text-ink-400 tnum">
-            {num(line.annualVolume)} {line.uom}/yr
-            {line.currentSupplier ? ` · via ${line.currentSupplier}` : ""}
-            {line.packSize > 1 ? ` · ${line.packSize}/pack` : ""}
-          </p>
-          {recId && (
-            <Link href={`/hospital/recommendations/${recId}`}
-              className="mt-3 inline-block rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600">
-              Continue to order →
+        <Section title="Replaces, from your article master"
+          action={recId ? (
+            <Link href={`/hospital/recommendations/${recId}`} className={buttonClass("primary", "sm")}>
+              Continue to order
             </Link>
-          )}
-        </div>
+          ) : undefined}>
+          <div className="card px-5 py-4">
+            <p className="font-semibold text-ink-950 dark:text-white">{line.name}</p>
+            <dl className="mt-1.5 grid gap-x-8 sm:grid-cols-2">
+              <Callout label="Annual volume" value={`${num(line.annualVolume)} ${line.uom}`} />
+              <Callout label="Bought via" value={line.currentSupplier ?? "—"} />
+              <Callout label="Pack" value={line.packSize > 1 ? `${line.packSize} per pack` : "single"} />
+              <Callout label="Declared class" value={`MDR ${line.mdrClass}`} />
+            </dl>
+          </div>
+        </Section>
       )}
 
       {/* The manufacturer's own words. Attributed, because unlike everything
           else on this page it was typed by the seller rather than read off a
           document the platform holds. */}
       {product.description && (
-        <section className="card p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-            From {product.manufacturer}
-          </h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-600 dark:text-ink-200">
+        <Section title={`From ${product.manufacturer}`}>
+          <p className="max-w-[68ch] whitespace-pre-line text-[0.92rem] leading-relaxed text-ink-700 dark:text-ink-200">
             {product.description}
           </p>
-        </section>
+        </Section>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Facts title="Specification" rows={attrs.length ? attrs.map(([k, v]) => [k.replace(/_/g, " "), String(v)]) : [["—", "nothing extracted"]]} />
-        <Facts title="Classification" rows={[
-          ["ECLASS", product.eclass ?? "—"],
-          ["MDR class", product.mdrClass],
-          ["per", product.uom],
-          ["pack size", String(product.packSize)],
-        ]} />
+      <div className="grid gap-7 sm:grid-cols-2">
+        <Section title="Specification">
+          <dl className="card px-5 py-2">
+            {attrs.length
+              ? attrs.map(([k, v]) => (
+                  <Callout key={k} label={dimensionLabel(k)} value={dimensionValue(k, v)}
+                    code={isIdentifier(k)} />
+                ))
+              : <p className="py-2 text-sm text-ink-400">Nothing extracted for this article.</p>}
+          </dl>
+        </Section>
+        <Section title="Classification">
+          <dl className="card px-5 py-2">
+            <Callout label="ECLASS" value={product.eclass ?? "—"} code />
+            <Callout label="MDR class" value={product.mdrClass} />
+            <Callout label="Unit" value={product.uom} />
+            <Callout label="Pack size" value={String(product.packSize)} />
+          </dl>
+        </Section>
       </div>
 
       <PreviousReplacements rows={replacements} />
@@ -242,68 +250,58 @@ function Overview({ product, line, recId, replacements }: {
   );
 }
 
-const ORDER_STATE: Record<string, string> = {
-  pending_clinical: "awaiting clinical sign-off",
-  pending_approval: "awaiting approval",
-  approved: "approved",
-  pooled: "awaiting placement",
-  sanovio_fulfillment: "in fulfilment",
-  fulfilled: "delivered",
+const ORDER_STATE: Record<string, { label: string; mark: MarkKind }> = {
+  pending_clinical: { label: "clinical sign-off", mark: "waiting" },
+  pending_approval: { label: "awaiting approval", mark: "waiting" },
+  approved: { label: "approved", mark: "working" },
+  pooled: { label: "awaiting placement", mark: "working" },
+  sanovio_fulfillment: { label: "in fulfilment", mark: "working" },
+  fulfilled: { label: "delivered", mark: "done" },
 };
 
 /**
- * Swaps this hospital has already put through on this product — as the article
- * brought in, or the one moved away from. Only placed orders appear: a
- * recommendation nobody acted on is a suggestion, not a replacement.
+ * Swaps this hospital has already put through on this product — as the
+ * article brought in, or the one moved away from.
+ * Only placed orders appear: a recommendation nobody acted on is a
+ * suggestion, not a replacement.
  */
 function PreviousReplacements({ rows }: { rows: PastReplacement[] }) {
   return (
-    <div className="rounded-2xl border border-ink-50 bg-white/70 p-5 dark:border-ink-800 dark:bg-ink-900/60">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">
-        Previous replacements
-      </h2>
+    <Section title="Previous replacements">
       {rows.length === 0 ? (
-        <p className="mt-2 text-sm text-ink-300">None yet.</p>
+        <Empty>No replacement has been ordered on this product yet.</Empty>
       ) : (
-        <ul className="mt-3 divide-y divide-ink-50 dark:divide-ink-800">
-          {rows.map((r) => (
-            <li key={r.orderId} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5 text-sm first:pt-0 last:pb-0">
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                r.direction === "in"
-                  ? "bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200"
-                  : "bg-ink-50 text-ink-500 dark:bg-ink-800 dark:text-ink-300"}`}>
-                {r.direction === "in" ? "brought in" : "replaced"}
-              </span>
-              <span className="min-w-0 flex-1">
-                {r.direction === "in"
-                  ? <>replaced <span className="font-medium">{r.fromName}</span> on {r.itemName}</>
-                  : <>replaced by <span className="font-medium">{r.toName}</span></>}
-              </span>
-              <span className="text-xs text-ink-400 tnum">
-                {num(r.volume)} units · {r.supplierName} ·{" "}
-                {new Date(r.createdAt).toLocaleDateString("de-CH")} ·{" "}
-                {ORDER_STATE[r.status] ?? r.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="card overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="border-b hair text-left">
+                {["Date", "Change", "Volume", "Supplier", "Status"].map((h) => <th key={h} className="label px-4 py-3">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--line)]">
+              {rows.map((r) => {
+                const st = ORDER_STATE[r.status] ?? { label: r.status, mark: "open" as MarkKind };
+                return (
+                  <tr key={r.orderId}>
+                    <td className="px-3 py-2.5 tnum text-ink-500">{new Date(r.createdAt).toLocaleDateString("de-CH")}</td>
+                    <td className="px-3 py-2.5">
+                      <Stamp tone={r.direction === "in" ? "brand" : "neutral"}>{r.direction === "in" ? "Brought in" : "Replaced"}</Stamp>
+                      <span className="ml-2">
+                        {r.direction === "in"
+                          ? <>replaced <span className="font-medium">{r.fromName}</span> on {r.itemName}</>
+                          : <>replaced by <span className="font-medium">{r.toName}</span></>}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 tnum">{num(r.volume)}</td>
+                    <td className="px-3 py-2.5 text-ink-600 dark:text-ink-200">{r.supplierName}</td>
+                    <td className="px-3 py-2.5"><span className="inline-flex items-center gap-1.5"><Mark kind={st.mark} />{st.label}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
-    </div>
-  );
-}
-
-function Facts({ title, rows }: { title: string; rows: [string, string][] }) {
-  return (
-    <div className="rounded-2xl border border-ink-50 bg-white/70 p-5 dark:border-ink-800 dark:bg-ink-900/60">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-400">{title}</h2>
-      <dl className="mt-3 space-y-1.5 text-sm">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-4">
-            <dt className="text-ink-400">{k}</dt>
-            <dd className="text-right font-medium tnum text-ink-800 dark:text-ink-100">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    </Section>
   );
 }

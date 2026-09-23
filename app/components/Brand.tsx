@@ -1,15 +1,18 @@
 import Link from "next/link";
+import { isDemo } from "@/lib/edition";
+import { DemoBadge } from "./Sidebar";
 
 /**
- * The platform wordmark, fixed top right on every page — the one place the
- * product names itself. Opposite the hamburger, so the two corners frame the
- * content column.
+ * The SANOVIO wordmark, top right on phones, where the rail that carries it
+ * on desktop is folded away. The site's own vector file, in its own violet.
  */
 export function Brand() {
   return (
-    <Link href="/"
-      className="fixed right-4 top-4 z-50 text-sm font-semibold uppercase tracking-[0.2em] text-ink-900 transition hover:text-brand-600 dark:text-ink-50 dark:hover:text-brand-300">
-      SANOVIO
+    <Link href="/" aria-label="SANOVIO — choose a portal"
+      className="fixed right-5 top-[1.6rem] z-30 rounded-md opacity-90 transition-opacity hover:opacity-100 lg:hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/sanovio-logo.svg" alt="SANOVIO" width={98} height={12} className="h-3 w-auto dark:brightness-[1.35]" />
+      {isDemo() && <span className="mt-1 flex justify-end"><DemoBadge /></span>}
     </Link>
   );
 }
