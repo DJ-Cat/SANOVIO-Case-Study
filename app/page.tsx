@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { portalSummary } from "@/lib/queries";
 import { isDemo } from "@/lib/edition";
+import { getPrefs } from "@/lib/prefs";
+import { PrefsSwitch } from "@/app/components/Prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +11,8 @@ export const dynamic = "force-dynamic";
  * purpose, and the three portals as feature cards — an icon on a pale,
  * lavender-lit panel, who the portal is for, and what it currently holds.
  */
-export default function Landing() {
+export default async function Landing() {
+  const { t } = await getPrefs();
   const s = portalSummary();
 
   return (
@@ -20,31 +23,32 @@ export default function Landing() {
           <img src="/brand/sanovio-logo.svg" alt="SANOVIO" width={196} height={24} className="mx-auto h-6 w-auto dark:brightness-[1.35]" />
           {isDemo() && (
             <p className="mx-auto mt-5 w-fit rounded-full bg-amber-50 px-3.5 py-1.5 text-xs font-semibold text-amber-800 shadow-[0_0_0_1px_rgb(245_158_11/0.25)] dark:bg-amber-500/10 dark:text-amber-200">
-              Demo edition — filled with sample data, reset any time
+              {t("Demo edition — filled with sample data, reset any time")}
             </p>
           )}
           <h1 className="mt-8 text-[2.4rem] font-bold leading-[1.1] tracking-[-0.025em] text-ink-950 [text-wrap:balance] dark:text-white">
-            Choose your portal
+            {t("Choose your portal")}
           </h1>
           <p className="mt-3 text-[1rem] leading-relaxed text-ink-500 [text-wrap:pretty] dark:text-ink-300">
-            Hospitals and manufacturers work in separate portals. They share one harmonised product
-            catalogue and nothing else — a manufacturer never sees a hospital&apos;s procurement strategy.
+            {t("Hospitals and manufacturers work in separate portals. They share one harmonised product catalogue and nothing else — a manufacturer never sees a hospital's procurement strategy.")}
           </p>
+          {/* Language and currency, chosen before anything else is read. */}
+          <div className="mt-6"><PrefsSwitch /></div>
         </header>
 
         <ol className="mt-12 grid gap-5 md:grid-cols-3">
-          <PortalCard href="/hospital" icon={<HospitalIcon />} title="Hospital procurement"
-            body="Upload your article master, work the suggested replacements, clear what still needs a signature, and approve orders into the pool."
-            stats={[["articles", s.hospitalItems], ["suggestions", s.recommendations], ["open reviews", s.hospitalReview]]}
-            cta="Enter hospital portal" primary />
-          <PortalCard href="/supplier" icon={<PackageIcon />} title="Manufacturer catalogue"
-            body="Upload your catalogue, confirm what extraction was unsure about, set volume pricing, and answer hospitals in Messages."
-            stats={[["catalogue rows", s.supplierItems], ["products", s.canonicalProducts], ["open questions", s.openQuestions]]}
-            cta="Enter supplier portal" />
-          <PortalCard href="/admin" icon={<RouteIcon />} title="Platform operations"
-            body="Matching pipeline observability: which layer resolved what, what it cost, and the confidence thresholds in force."
-            stats={[["products", s.canonicalProducts], ["links", s.links], ["match runs", s.runs]]}
-            cta="Enter operations" />
+          <PortalCard href="/hospital" icon={<HospitalIcon />} title={t("Hospital procurement")}
+            body={t("Upload your article master, work the suggested replacements, clear what still needs a signature, and approve orders into the pool.")}
+            stats={[[t("articles"), s.hospitalItems], [t("suggestions"), s.recommendations], [t("open reviews"), s.hospitalReview]]}
+            cta={t("Enter hospital portal")} primary />
+          <PortalCard href="/supplier" icon={<PackageIcon />} title={t("Manufacturer catalogue")}
+            body={t("Upload your catalogue, confirm what extraction was unsure about, set volume pricing, and answer hospitals in Messages.")}
+            stats={[[t("catalogue rows"), s.supplierItems], [t("products"), s.canonicalProducts], [t("open questions"), s.openQuestions]]}
+            cta={t("Enter supplier portal")} />
+          <PortalCard href="/admin" icon={<RouteIcon />} title={t("Platform operations")}
+            body={t("Matching pipeline observability: which layer resolved what, what it cost, and the confidence thresholds in force.")}
+            stats={[[t("products"), s.canonicalProducts], [t("links"), s.links], [t("match runs"), s.runs]]}
+            cta={t("Enter operations")} />
         </ol>
       </section>
     </div>

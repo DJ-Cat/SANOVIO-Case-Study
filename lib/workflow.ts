@@ -12,6 +12,7 @@ import { rebuildRecommendations, baseUnits } from "./matching/recommend";
 import { HOSPITAL_ID, BUYER, APPROVER, CLINICAL } from "./constants";
 import { compareForReview, type ProductView } from "./ai";
 import { postMessage } from "./messaging";
+import { UserError, msg, messageOf, type Message } from "./i18n/user-error";
 
 function logCorrection(
   itemType: string, itemId: string, field: string, oldV: string, newV: string, by: string | null,
@@ -350,6 +351,14 @@ export interface UploadOutcome {
   ok: boolean;
   message: string;
   detail?: string;
+  /** The same two sentences as templates, for lib/actions.ts to put in the reader's language. */
+  i18n?: { message: Message; detail?: Message };
+}
+
+/** An outcome whose English is filled from its templates, so both always agree. */
+function outcome(ok: boolean, message: Message, detail?: Message): UploadOutcome {
+  const fill = (m: Message) => new UserError(m.text, m.vars).message;
+  return { ok, message: fill(message), detail: detail && fill(detail), i18n: { message, detail } };
 }
 
 /**
@@ -359,22 +368,20 @@ export interface UploadOutcome {
 export async function uploadHospitalDemand(formData: FormData): Promise<UploadOutcome> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, message: "Choose a file to upload." };
+    return outcome(false, msg("Choose a file to upload."));
   }
   const bytes = Buffer.from(await file.arrayBuffer());
   try {
     const res = await ingestHospitalDemand(
       HOSPITAL_ID, BUYER, file.name, file.type || "application/octet-stream", bytes);
     await regenerate();
-    return {
-      ok: true,
-      message: `${file.name}: ${res.rows} article rows read.`,
-      detail: res.needsReview
-        ? `${res.accepted} accepted, ${res.needsReview} held for review.`
-        : `All ${res.accepted} rows cleared the extraction threshold.`,
-    };
+    return outcome(true,
+      msg("{file}: {rows} article rows read.", { file: file.name, rows: res.rows }),
+      res.needsReview
+        ? msg("{accepted} accepted, {held} held for review.", { accepted: res.accepted, held: res.needsReview })
+        : msg("All {accepted} rows cleared the extraction threshold.", { accepted: res.accepted }));
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return outcome(false, messageOf(e));
   }
 }
 
@@ -383,9 +390,9 @@ export async function uploadSupplierCatalogue(formData: FormData): Promise<Uploa
   const file = formData.get("file");
   const supplierId = String(formData.get("supplierId") ?? "");
   if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, message: "Choose a file to upload." };
+    return outcome(false, msg("Choose a file to upload."));
   }
-  if (!supplierId) return { ok: false, message: "Choose which manufacturer this catalogue belongs to." };
+  if (!supplierId) return outcome(false, msg("Choose which manufacturer this catalogue belongs to."));
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const userId = row<{ id: string }>(
@@ -394,14 +401,14 @@ export async function uploadSupplierCatalogue(formData: FormData): Promise<Uploa
     const res = await ingestSupplierCatalogue(
       supplierId, userId ?? "", file.name, file.type || "application/pdf", bytes);
     await regenerate();
-    const images = res.images ? `, ${res.images} product image(s) recovered` : "";
-    return {
-      ok: true,
-      message: `${file.name}: ${res.rows} SKUs read, ${res.newProducts} products created${images}.`,
-      detail: res.note ?? `All ${res.accepted} rows cleared the extraction threshold.`,
-    };
+    const vars = { file: file.name, rows: res.rows, created: res.newProducts, images: res.images };
+    return outcome(true,
+      res.images
+        ? msg("{file}: {rows} SKUs read, {created} products created, {images} product image(s) recovered.", vars)
+        : msg("{file}: {rows} SKUs read, {created} products created.", vars),
+      res.noteMessage ?? msg("All {accepted} rows cleared the extraction threshold.", { accepted: res.accepted }));
   } catch (e) {
-    return { ok: false, message: (e as Error).message };
+    return outcome(false, messageOf(e));
   }
 }
 
@@ -494,6 +501,81 @@ export async function setProductDescription(
     .run(trimmed || null, canonicalId);
 }
 
+const MDR_CLASSES = new Set(["I", "IIa", "IIb", "III"]);
+
+export interface IdentityInput { mdrClass: string; uom: string; packSize: number; sku: string }
+
+/**
+ * The facts a hospital reads first — risk class, unit, article number —
+ * corrected by the manufacturer.
+ *
+ * Extraction gets these wrong often enough (a class missed in a footnote, a
+ * box read as a piece) that the manufacturer has to be able to fix them. What
+ * it cannot do is fix them silently: a class decides whether a switch needs
+ * clinical sign-off, and the unit is what every price on the product is per.
+ * The page warns before saving; this records each change in the correction
+ * log so the before is never lost, and rebuilds the recommendations whose
+ * clinical gate was worked out from the old class.
+ *
+ * The article number lives on the catalogue row rather than the product, so
+ * it is changed on every row of this manufacturer's that resolved to it.
+ */
+export async function setProductIdentity(
+  supplierId: string, canonicalId: string, input: IdentityInput,
+): Promise<{ changed: string[] }> {
+  if (!ownedProduct(canonicalId, supplierId)) throw new Error("That is not one of your products.");
+
+  const mdrClass = input.mdrClass.trim();
+  const uom = input.uom.trim();
+  const sku = input.sku.trim();
+  const packSize = Math.round(input.packSize);
+  if (!MDR_CLASSES.has(mdrClass)) throw new Error("Choose a risk class: I, IIa, IIb or III.");
+  if (!uom) throw new Error("A product needs a unit — what one price is for.");
+  if (!Number.isFinite(packSize) || packSize < 1) throw new Error("A pack holds at least one unit.");
+  if (!sku) throw new Error("A product needs an article number.");
+
+  const before = row<{ mdr_risk_class: string; base_uom: string; base_pack_size: number }>(
+    `SELECT mdr_risk_class, base_uom, base_pack_size FROM canonical_products WHERE id=?`, canonicalId)!;
+  const beforeSku = row<{ sku: string | null }>(
+    `SELECT extracted_sku AS sku FROM supplier_catalog_items
+     WHERE canonical_product_id=? AND supplier_id=? LIMIT 1`, canonicalId, supplierId)?.sku ?? "";
+
+  // Hospitals match on the article number exactly, so two of one
+  // manufacturer's products sharing one would send a line to either at random.
+  if (sku.toUpperCase() !== beforeSku.toUpperCase() && row(
+      `SELECT 1 FROM supplier_catalog_items WHERE supplier_id=? AND UPPER(extracted_sku)=UPPER(?)
+         AND (canonical_product_id IS NULL OR canonical_product_id != ?)`, supplierId, sku, canonicalId)) {
+    throw new UserError("Article number {sku} is already used by another of your products.", { sku });
+  }
+
+  const changes: [field: string, oldV: string, newV: string][] = [
+    ["mdr_risk_class", before.mdr_risk_class, mdrClass],
+    ["base_uom", before.base_uom, uom],
+    ["base_pack_size", String(before.base_pack_size), String(packSize)],
+    ["extracted_sku", beforeSku, sku],
+  ];
+  const changed = changes.filter(([, o, n]) => o !== n);
+  if (!changed.length) return { changed: [] };
+
+  const by = row<{ id: string }>(
+    `SELECT id FROM users WHERE organization_id=? AND role='supplier_user' LIMIT 1`, supplierId)?.id ?? null;
+  const conn = db();
+  tx(() => {
+    conn.prepare(`UPDATE canonical_products SET mdr_risk_class=?, base_uom=?, base_pack_size=? WHERE id=?`)
+      .run(mdrClass, uom, packSize, canonicalId);
+    conn.prepare(
+      `UPDATE supplier_catalog_items SET extracted_sku=?, extracted_uom=?, extracted_pack_size=?,
+         corrected_by=?, corrected_at=? WHERE canonical_product_id=? AND supplier_id=?`)
+      .run(sku, uom, packSize, by, nowIso(), canonicalId, supplierId);
+    for (const [field, o, n] of changed) logCorrection("canonical", canonicalId, field, o, n, by);
+  });
+
+  // Only the class feeds a recommendation (its clinical gate); a unit or an
+  // article number changes what a hospital reads, not what was worked out.
+  if (before.mdr_risk_class !== mdrClass) await rebuildRecommendations();
+  return { changed: changed.map(([f]) => f) };
+}
+
 export interface TierInput { minVolume: number; unitPrice: number }
 
 /**
@@ -582,12 +664,12 @@ export async function addProductImage(
   if (!ownedProduct(canonicalId, supplierId)) return;
   if (!bytes.byteLength) throw new Error("That file is empty.");
   if (!IMAGE_TYPES.has(contentType)) {
-    throw new Error(`${filename} is not a PNG, JPEG, WebP or GIF image.`);
+    throw new UserError("{file} is not a PNG, JPEG, WebP or GIF image.", { file: filename });
   }
   if (bytes.byteLength > MAX_IMAGE_BYTES) {
-    throw new Error(
-      `${filename} is ${(bytes.byteLength / 1e6).toFixed(1)} MB; the limit is ` +
-      `${(MAX_IMAGE_BYTES / 1e6).toFixed(0)} MB.`);
+    throw new UserError("{file} is {size} MB; the limit is {limit} MB.", {
+      file: filename, size: (bytes.byteLength / 1e6).toFixed(1), limit: (MAX_IMAGE_BYTES / 1e6).toFixed(0),
+    });
   }
   // figure_id is unique per product and is what an extracted figure is keyed
   // by; an upload is not a figure, so it is namespaced rather than colliding.

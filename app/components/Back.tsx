@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "./icons";
+import { usePrefs } from "./Prefs";
 
 /**
  * "Back" that means the previous page, and still works when there isn't one.
@@ -32,7 +33,8 @@ function parentOf(pathname: string): string {
   return segments.length > 1 ? `/${segments[0]}` : "/";
 }
 
-export function Back({ href, label = "Back" }: { href?: string; label?: string }) {
+export function Back({ href, label }: { href?: string; label?: string }) {
+  const { t } = usePrefs();
   const pathname = usePathname();
   const router = useRouter();
   const [canGoBack, setCanGoBack] = useState(false);
@@ -64,7 +66,7 @@ export function Back({ href, label = "Back" }: { href?: string; label?: string }
                  dark:hover:bg-ink-900 dark:hover:text-ink-100"
     >
       <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-      {label}
+      {label ?? t("Back")}
     </a>
   );
 }

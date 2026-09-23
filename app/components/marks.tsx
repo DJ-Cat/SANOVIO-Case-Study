@@ -31,6 +31,18 @@ export function Stamp({ children, tone = "neutral", title }: {
   );
 }
 
+const VERDICT: Record<string, { word: string; tone: Tone }> = {
+  identical: { word: "Identical", tone: "good" },
+  equivalent: { word: "Equivalent", tone: "brand" },
+  not_equivalent: { word: "Not equivalent", tone: "danger" },
+};
+
+/** The analysis's verdict on a switch, as a pill. */
+export function VerdictStamp({ verdict, t = (s) => s }: { verdict: string; t?: (text: string) => string }) {
+  const v = VERDICT[verdict] ?? { word: verdict.replace("_", " "), tone: "neutral" as Tone };
+  return <Stamp tone={v.tone}>{t(v.word)}</Stamp>;
+}
+
 export type MarkKind = "open" | "working" | "done" | "blocked" | "rejected" | "waiting";
 
 /**

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Page, Section, Empty, Stamp, Mark, Note, RiskBadge, price, num, buttonClass, type MarkKind } from "../components/ui";
+import { Page, Section, Empty, Stamp, Mark, Note, RiskBadge, num, buttonClass, type MarkKind } from "../components/ui";
+import { Money } from "../components/Prefs";
 import { SearchBar } from "../components/SearchBar";
 import { PartsList, RecRow, SuggestionRow, HitRow } from "../components/PartsList";
 import { UploadForm } from "../components/UploadForm";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/queries";
 import { reconsider, uploadHospitalDemandAction, reconsiderSuggestionAction } from "@/lib/actions";
 import { searchProducts } from "@/lib/search";
+import { getPrefs } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,7 @@ export default async function HospitalCockpit({
 }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  const { t, money } = await getPrefs();
 
   const docs = hospitalDocuments();
   const hasData = docs.length > 0;
@@ -44,7 +47,7 @@ export default async function HospitalCockpit({
   const dismissedSuggested = dismissedSuggestions();
   const pending = suggestionsPending();
   const orders = currentOrders();
-  const t = totals();
+  const sum = totals();
   const { lowExtraction, proposals } = hospitalReviewQueue();
   const reviewCount = lowExtraction.length + proposals.length;
   const search = query ? await searchProducts(query) : null;
@@ -54,47 +57,46 @@ export default async function HospitalCockpit({
 
   if (!hasData && !query) {
     return (
-      <Page title="Upload your article master"
-        lead="Start with an excerpt of your article master as Excel or CSV. The file is stored as uploaded, so every saving the platform claims can be traced back to the document it came from.">
+      <Page title={t("Upload your article master")}
+        lead={t("Start with an excerpt of your article master as Excel or CSV. The file is stored as uploaded, so every saving the platform claims can be traced back to the document it came from.")}>
         <UploadForm
           action={uploadHospitalDemandAction}
           accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          hint="Excel (.xlsx) or CSV — Artikelbezeichnung, Jahresmenge, GTIN, MDR-Klasse, Netto-Zielpreis" />
+          hint={t("Excel (.xlsx) or CSV — Artikelbezeichnung, Jahresmenge, GTIN, MDR-Klasse, Netto-Zielpreis")} />
       </Page>
     );
   }
 
   return (
-    <Page title="Suggested replacements"
-      lead="What the platform found against your article master, cheapest to act on first."
+    <Page title={t("Suggested replacements")}
+      lead={t("What the platform found against your article master, cheapest to act on first.")}
       action={
-        <Link href="/hospital/documents" className={buttonClass("ghost")}>Upload more data</Link>
+        <Link href="/hospital/documents" className={buttonClass("ghost")}>{t("Upload more data")}</Link>
       }>
 
       <SearchBar q={query} />
 
       {reviewCount > 0 && !query && (
         <Note as="a" href="/hospital/documents" tone="warn" mark={<Mark kind="waiting" className="h-3 w-3" />}
-          action={<span className="text-xs font-semibold text-ink-700 dark:text-ink-100">Open documents</span>}>
-          <span className="font-semibold tnum">{reviewCount} item{reviewCount > 1 ? "s" : ""}</span> need approval
-          before they can feed the matching engine.
+          action={<span className="text-xs font-semibold text-ink-700 dark:text-ink-100">{t("Open documents")}</span>}>
+          <span className="font-semibold tnum">{t(reviewCount > 1 ? "{n} items" : "{n} item", { n: reviewCount })}</span>{" "}
+          {t("need approval before they can feed the matching engine.")}
         </Note>
       )}
 
       {query ? (
-        <Section title={`Search · “${query}”`}
-          meta={`${hits.length} result${hits.length === 1 ? "" : "s"}${close ? ` · ${close} close match${close === 1 ? "" : "es"}` : ""}`}
-          action={<Link href="/hospital" className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">Clear search</Link>}>
+        <Section title={t("Search · “{query}”", { query })}
+          meta={`${t(hits.length === 1 ? "{n} result" : "{n} results", { n: hits.length })}${close ? ` · ${t(close === 1 ? "{n} close match" : "{n} close matches", { n: close })}` : ""}`}
+          action={<Link href="/hospital" className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">{t("Clear search")}</Link>}>
           {search && hits.length > 0 && (search.expanded.length > 0 || search.semantic) && (
             <p className="-mt-1 text-xs text-ink-400">
-              {search.expanded.length > 0 && <>Also searched for {search.expanded.join(", ")}. </>}
-              Meaning matched by {search.semantic}.
+              {search.expanded.length > 0 && <>{t("Also searched for {terms}.", { terms: search.expanded.join(", ") })} </>}
+              {t("Meaning matched by {model}.", { model: String(search.semantic) })}
             </p>
           )}
           {hits.length === 0 ? (
             <Empty>
-              Nothing in the harmonised catalogue is close to “{query}”, in any language. Coverage is
-              bounded by what manufacturers have uploaded.
+              {t("Nothing in the harmonised catalogue is close to “{query}”, in any language. Coverage is bounded by what manufacturers have uploaded.", { query })}
             </Empty>
           ) : (
             <PartsList>{hits.map((h, i) => <HitRow key={h.canonicalId} hit={h} pos={i + 1} />)}</PartsList>
@@ -102,20 +104,19 @@ export default async function HospitalCockpit({
         </Section>
       ) : (
         <>
-          <Section title="Suggestions"
-            meta={`${open} open · CHF ${num(t.savings)} identified · CHF ${num(t.spend)} addressable${suggestions.length ? ` · ${suggestions.length} by automatic matching` : ""}`}>
+          <Section title={t("Suggestions")}
+            meta={`${t("{n} open", { n: open })} · ${t("{amount} identified", { amount: money(sum.savings, "CHF", 0) })} · ${t("{amount} addressable", { amount: money(sum.spend, "CHF", 0) })}${suggestions.length ? ` · ${t("{n} by automatic matching", { n: suggestions.length })}` : ""}`}>
             {pending && (
-              <Note tone="brand" label="Running" mark={<Spinner small />} live>
-                Matching your catalogue against the manufacturers&apos; — rows appear as they are found,
-                and each best match is analysed in full.
+              <Note tone="brand" label={t("Running")} mark={<Spinner small />} live>
+                {t("Matching your catalogue against the manufacturers' — rows appear as they are found, and each best match is analysed in full.")}
               </Note>
             )}
             <SuggestionsPoller pending={pending} />
             {open === 0 ? (
               <Empty>
                 {pending
-                  ? "Nothing matched yet — the run is still going."
-                  : "No open suggestions. Clear the review queue, or wait for a manufacturer catalogue covering these categories."}
+                  ? t("Nothing matched yet — the run is still going.")
+                  : t("No open suggestions. Clear the review queue, or wait for a manufacturer catalogue covering these categories.")}
               </Empty>
             ) : (
               <PartsList>
@@ -127,16 +128,16 @@ export default async function HospitalCockpit({
             )}
           </Section>
 
-          <Section title="Orders" meta={orders.length ? `${orders.length}` : undefined}>
+          <Section title={t("Orders")} meta={orders.length ? `${orders.length}` : undefined}>
             {orders.length === 0 ? (
-              <Empty>Nothing ordered yet. Open a row above to replace an item.</Empty>
+              <Empty>{t("Nothing ordered yet. Open a row above to replace an item.")}</Empty>
             ) : (
               <div className="card overflow-x-auto">
                 <table className="w-full min-w-[820px] text-sm">
                   <thead>
                     <tr className="border-b hair-strong text-left">
                       {["Order", "Article · replaces", "Quantity", "Supplier", "Unit price", "Status"].map((h) => (
-                        <th key={h} className="label px-3 py-2.5">{h}</th>
+                        <th key={h} className="label px-3 py-2.5">{t(h)}</th>
                       ))}
                     </tr>
                   </thead>
@@ -151,17 +152,17 @@ export default async function HospitalCockpit({
                               <span className="font-medium text-ink-950 dark:text-white">{o.recommended_name}</span>
                               <RiskBadge cls={o.mdr_risk_class as "I" | "IIa" | "IIb" | "III"} />
                             </div>
-                            <div className="mt-0.5 text-xs text-ink-400">replaces {o.item_name}</div>
+                            <div className="mt-0.5 text-xs text-ink-400">{t("replaces {name}", { name: o.item_name })}</div>
                           </td>
                           <td className="px-3 py-3 tnum">{num(o.volume)}</td>
                           <td className="px-3 py-3 text-ink-600 dark:text-ink-200">{o.supplier_name}</td>
                           <td className="px-3 py-3 tnum">
-                            {o.currency} {price(o.unit_price)}
+                            <Money amount={o.unit_price} from={o.currency} />
                             <span className="ml-1.5 text-xs text-ink-400">{o.savings_pct >= 0 ? "−" : "+"}{Math.abs(o.savings_pct)} %</span>
                           </td>
                           <td className="px-3 py-3">
                             <span className="inline-flex items-center gap-1.5 text-[0.85rem]">
-                              <Mark kind={st.mark} /> {st.label}
+                              <Mark kind={st.mark} /> {t(st.label)}
                             </span>
                           </td>
                         </tr>
@@ -174,17 +175,17 @@ export default async function HospitalCockpit({
           </Section>
 
           {(dismissed.length > 0 || dismissedSuggested.length > 0) && (
-            <Section title="Dismissed" meta="kept, never deleted">
+            <Section title={t("Dismissed")} meta={t("kept, never deleted")}>
               <div className="card divide-y divide-[var(--line)]">
                 {dismissedSuggested.map((d) => (
                   <div key={`${d.itemId}|${d.canonicalId}`} className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{d.name}</div>
-                      <div className="truncate text-xs text-ink-400">for {d.itemName}</div>
+                      <div className="truncate text-xs text-ink-400">{t("for {name}", { name: d.itemName })}</div>
                     </div>
-                    <Stamp tone="neutral">Auto</Stamp>
+                    <Stamp tone="neutral">{t("Auto")}</Stamp>
                     <form action={reconsiderSuggestionAction.bind(null, d.itemId, d.canonicalId)}>
-                      <button className={buttonClass("ghost", "sm")}>Reconsider</button>
+                      <button className={buttonClass("ghost", "sm")}>{t("Reconsider")}</button>
                     </form>
                   </div>
                 ))}
@@ -193,13 +194,13 @@ export default async function HospitalCockpit({
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{r.recommendedName}</div>
                       <div className="truncate text-xs text-ink-400">
-                        replaces {r.itemName}
-                        {r.dismissedReason ? ` · ${r.dismissedReason}` : " · no reason given"}
+                        {t("replaces {name}", { name: r.itemName })}
+                        {r.dismissedReason ? ` · ${t(r.dismissedReason)}` : ` · ${t("no reason given")}`}
                       </div>
                     </div>
                     <span className="tnum text-sm text-ink-400">−{r.savingsPct} %</span>
                     <form action={reconsider.bind(null, r.id)}>
-                      <button className={buttonClass("ghost", "sm")}>Reconsider</button>
+                      <button className={buttonClass("ghost", "sm")}>{t("Reconsider")}</button>
                     </form>
                   </div>
                 ))}

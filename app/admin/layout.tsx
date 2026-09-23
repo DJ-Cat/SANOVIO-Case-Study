@@ -1,17 +1,19 @@
 import { PortalShell } from "@/app/components/PortalShell";
+import { getPrefs } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { t } = await getPrefs();
   return (
     <PortalShell
-      portal="SANOVIO operations"
+      portal={t("SANOVIO operations")}
       accent="text-ink-500 dark:text-ink-300"
-      subtitle="Internal — pipeline and documents"
+      subtitle={t("Internal — pipeline and documents")}
       items={[
-        { href: "/admin", label: "Overview" },
-        { href: "/admin/pipeline", label: "Matching pipeline" },
-        { href: "/admin/documents", label: "Uploaded documents" },
+        { href: "/admin", label: t("Overview") },
+        { href: "/admin/pipeline", label: t("Matching pipeline") },
+        { href: "/admin/documents", label: t("Uploaded documents") },
       ]}
     >
       {children}

@@ -6,7 +6,10 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { selectReplacementAction, type ReplaceOutcome } from "@/lib/actions";
 import type { ReplacementOption } from "@/lib/queries";
+import { pick, type Locale } from "@/lib/i18n";
 import { Spinner } from "./OpenProblems";
+import { usePrefs } from "./Prefs";
+import { num } from "./format";
 
 /**
  * "Replace with this": the buyer names which of their own lines this product
@@ -21,12 +24,13 @@ export function ReplaceWithThis({ canonicalId, productName, manufacturer, option
   canonicalId: string; productName: string; manufacturer: string;
   options: ReplacementOption[]; defaultItemId: string | null;
 }) {
+  const { t } = usePrefs();
   const [open, setOpen] = useState(false);
   return (
     <>
       <button onClick={() => setOpen(true)}
         className="btn-gradient inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white">
-        <SwapIcon /> Replace with this
+        <SwapIcon /> {t("Replace with this")}
       </button>
       {open && (
         <Dialog canonicalId={canonicalId} productName={productName} manufacturer={manufacturer}
@@ -47,6 +51,7 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
   options: ReplacementOption[]; defaultItemId: string | null; onClose: () => void;
 }) {
   const router = useRouter();
+  const { t, locale } = usePrefs();
   const titleId = useId();
   const selectRef = useRef<HTMLSelectElement>(null);
   const initial = options.find((o) => o.id === defaultItemId)?.id ?? "";
@@ -79,8 +84,8 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
   // The notice is read, not acted on; it closes itself.
   useEffect(() => {
     if (phase.kind !== "calculating") return;
-    const t = setTimeout(() => finish(phase.itemId), 3200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => finish(phase.itemId), 3200);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
@@ -102,41 +107,39 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
         {phase.kind === "ready" ? (
           <div className="flex flex-col items-center py-4 text-center" aria-live="polite">
             <h2 id={titleId} className="text-base font-semibold text-ink-950 dark:text-white">
-              The match is already calculated
+              {t("The match is already calculated")}
             </h2>
             <p className="mt-2 max-w-sm text-sm text-ink-500 dark:text-ink-300">
-              {productName} is now the replacement for <span className="font-medium">{phase.lineName}</span>.
-              It was analysed in advance when it was suggested, on the same data it has now, so its
-              points are ready to sign off or send.
+              <NowReplaces locale={locale} product={productName} line={phase.lineName} />{" "}
+              {t("It was analysed in advance when it was suggested, on the same data it has now, so its points are ready to sign off or send.")}
             </p>
             <button onClick={() => finish(phase.itemId, "problems")}
               className="mt-5 inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-              Review the points
+              {t("Review the points")}
             </button>
           </div>
         ) : phase.kind === "calculating" ? (
           <div className="flex flex-col items-center py-4 text-center" aria-live="polite">
             <Spinner />
             <h2 id={titleId} className="mt-4 text-base font-semibold text-ink-950 dark:text-white">
-              The match is being calculated
+              {t("The match is being calculated")}
             </h2>
             <p className="mt-2 max-w-sm text-sm text-ink-500 dark:text-ink-300">
-              {productName} is now the replacement for <span className="font-medium">{phase.lineName}</span>.
-              Price, replaceability, safety and correctness are being checked — this takes a minute
-              or two.
+              <NowReplaces locale={locale} product={productName} line={phase.lineName} />{" "}
+              {t("Price, replaceability, safety and correctness are being checked — this takes a minute or two.")}
             </p>
             <p className="mt-2 max-w-sm text-xs text-ink-400">
-              The points it finds appear on this product page and in your catalogue as they land.
+              {t("The points it finds appear on this product page and in your catalogue as they land.")}
             </p>
             <button onClick={() => finish(phase.itemId)}
               className="mt-5 inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-              Back to the product
+              {t("Back to the product")}
             </button>
           </div>
         ) : (
           <>
             <h2 id={titleId} className="text-base font-semibold text-ink-950 dark:text-white">
-              Replace with this
+              {t("Replace with this")}
             </h2>
             <p className="mt-1 text-sm text-ink-500 dark:text-ink-300">
               {productName} <span className="text-ink-400">· {manufacturer}</span>
@@ -144,33 +147,39 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
 
             {options.length === 0 ? (
               <p className="mt-4 rounded-xl bg-amber-50 shadow-[0_0_0_1px_rgb(245_158_11/0.25)] dark:bg-amber-500/10 px-3.5 py-2.5 text-sm text-amber-900 dark:text-amber-100">
-                Your catalogue is empty, so there is nothing to replace yet. Upload your article
-                master under{" "}
-                <Link href="/hospital/documents" className="font-semibold underline">Documents</Link> first.
+                {/* Whole sentences per language: German puts the verb after the link. */}
+                {pick(locale,
+                  <>Your catalogue is empty, so there is nothing to replace yet. Upload your article master under{" "}
+                    <Link href="/hospital/documents" className="font-semibold underline">Documents</Link> first.</>,
+                  <>Ihr Katalog ist leer, es gibt also noch nichts zu ersetzen. Laden Sie Ihren Artikelstamm zuerst unter{" "}
+                    <Link href="/hospital/documents" className="font-semibold underline">Dokumente</Link> hoch.</>)}
               </p>
             ) : (
               <>
                 <label htmlFor={`${titleId}-line`}
                   className="label mt-5 block">
-                  Which article from your catalogue does it replace?
+                  {t("Which article from your catalogue does it replace?")}
                 </label>
                 <select id={`${titleId}-line`} ref={selectRef} value={itemId} disabled={busy}
                   onChange={(e) => setItemId(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-3 py-2 text-sm text-ink-900 disabled:opacity-50 dark:text-ink-50">
-                  <option value="" disabled>Choose an article…</option>
-                  {options.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name}{o.detail ? ` — ${o.detail}` : ""}
-                    </option>
-                  ))}
+                  <option value="" disabled>{t("Choose an article…")}</option>
+                  {options.map((o) => {
+                    const detail = [o.brand, o.supplier ? t("via {supplier}", { supplier: o.supplier }) : null,
+                      o.annualVolume ? t("{volume} {uom}/yr", { volume: num(o.annualVolume), uom: o.uom ?? "" }).trim() : null]
+                      .filter(Boolean).join(" · ");
+                    return (
+                      <option key={o.id} value={o.id}>
+                        {o.name}{detail ? ` — ${detail}` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
 
                 {chosen && <ChoiceNote option={chosen} canonicalId={canonicalId} />}
 
                 <p className="mt-4 text-xs leading-relaxed text-ink-400">
-                  Confirming starts a match against that article: price, replaceability, safety and
-                  correctness, looked up on the web where the catalogue data runs out. Each issue it
-                  finds becomes a point you can sign off yourself or send to {manufacturer}.
+                  {t("Confirming starts a match against that article: price, replaceability, safety and correctness, looked up on the web where the catalogue data runs out. Each issue it finds becomes a point you can sign off yourself or send to {manufacturer}.", { manufacturer })}
                 </p>
               </>
             )}
@@ -184,11 +193,11 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={onClose} disabled={busy}
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white font-semibold text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] transition-all hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] disabled:opacity-40 dark:bg-ink-900 dark:text-ink-100 px-4 py-2 text-sm">
-                Cancel
+                {t("Cancel")}
               </button>
               <button onClick={confirm} disabled={busy || !chosen}
                 className="inline-flex items-center justify-center gap-1.5 btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                {busy ? "Confirming…" : "Confirm"}
+                {busy ? t("Confirming…") : t("Confirm")}
               </button>
             </div>
           </>
@@ -200,31 +209,40 @@ function Dialog({ canonicalId, productName, manufacturer, options, defaultItemId
 
 /** What confirming will do to this particular line, when it is not obvious. */
 function ChoiceNote({ option, canonicalId }: { option: ReplacementOption; canonicalId: string }) {
+  const { t, locale } = usePrefs();
   const current = option.currentReplacement;
   if (current && current.canonicalId === canonicalId) {
     return (
       <p className="mt-2 text-xs text-ink-500 dark:text-ink-300">
-        This is already the chosen replacement for that line. Confirming changes nothing.
+        {t("This is already the chosen replacement for that line. Confirming changes nothing.")}
       </p>
     );
   }
   if (current) {
     return (
       <p className="mt-2 rounded-xl bg-amber-50 shadow-[0_0_0_1px_rgb(245_158_11/0.25)] dark:bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-100">
-        That line is already set to be replaced by <span className="font-semibold">{current.name}</span>.
-        Confirming switches it to this product. Points you signed off or sent stay on record.
+        {pick(locale,
+          <>That line is already set to be replaced by <span className="font-semibold">{current.name}</span>.</>,
+          <>Für diese Zeile ist bereits <span className="font-semibold">{current.name}</span> als Ersatz vorgesehen.</>)}{" "}
+        {t("Confirming switches it to this product. Points you signed off or sent stay on record.")}
       </p>
     );
   }
   if (option.sameArticle) {
     return (
       <p className="mt-2 text-xs text-ink-500 dark:text-ink-300">
-        This is the article that line already is — the switch is to buying it direct, not to a
-        different product.
+        {t("This is the article that line already is — the switch is to buying it direct, not to a different product.")}
       </p>
     );
   }
   return null;
+}
+
+/** "{product} is now the replacement for {line}." — with the line set in medium weight. */
+function NowReplaces({ locale, product, line }: { locale: Locale; product: string; line: string }) {
+  return pick(locale,
+    <>{product} is now the replacement for <span className="font-medium">{line}</span>.</>,
+    <>{product} ersetzt jetzt <span className="font-medium">{line}</span>.</>);
 }
 
 function SwapIcon() {

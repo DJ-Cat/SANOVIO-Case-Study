@@ -32,6 +32,8 @@ export interface SearchHit {
   canonicalId: string; name: string; manufacturer: string; mdrClass: MdrClass;
   uom: string; packSize: number; eclass: string | null; gtin: string | null;
   supplierId: string | null; basePrice: number | null; tierOrigin: string | null;
+  /** What `basePrice` is quoted in. */
+  currency: string;
   ownedByHospital: boolean; currentPrice: number | null; savingsPct: number | null;
   match: MatchKind; score: number;
 }
@@ -99,7 +101,7 @@ interface Row {
   eclass: string | null; gtin: string | null; udi: string | null; attributes: string;
   embedding: Uint8Array | null; embedding_model: string | null; skus: string | null;
   base_price: number | null; tier_origin: string | null; supplier_id: string | null;
-  current_price: number | null;
+  currency: string | null; current_price: number | null;
 }
 
 const cache = new Map<string, { at: number; result: SearchResult }>();
@@ -233,6 +235,7 @@ function loadProducts(): Row[] {
             (SELECT unit_price FROM price_tiers t WHERE t.canonical_product_id=cp.id
               ORDER BY min_volume ASC LIMIT 1) AS base_price,
             (SELECT origin FROM price_tiers t WHERE t.canonical_product_id=cp.id LIMIT 1) AS tier_origin,
+            (SELECT currency FROM price_tiers t WHERE t.canonical_product_id=cp.id LIMIT 1) AS currency,
             (SELECT supplier_id FROM price_tiers t WHERE t.canonical_product_id=cp.id LIMIT 1) AS supplier_id,
             (SELECT h.current_unit_price FROM hospital_purchase_items h
               WHERE h.canonical_product_id=cp.id AND h.hospital_id=? LIMIT 1) AS current_price
@@ -314,7 +317,7 @@ function toHit(p: Row, match: MatchKind, score: number): SearchHit {
   return {
     canonicalId: p.id, name: p.name, manufacturer: p.manufacturer ?? "—",
     mdrClass: (p.mdr ?? "IIa") as MdrClass, uom: p.uom, packSize: p.pack, eclass: p.eclass,
-    gtin: p.gtin, supplierId: p.supplier_id, basePrice: p.base_price, tierOrigin: p.tier_origin,
+    gtin: p.gtin, supplierId: p.supplier_id, basePrice: p.base_price, tierOrigin: p.tier_origin, currency: p.currency ?? "CHF",
     ownedByHospital: p.current_price != null, currentPrice: p.current_price, savingsPct: savings,
     match, score: Math.round(score),
   };

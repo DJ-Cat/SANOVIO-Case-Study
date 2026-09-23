@@ -9,6 +9,8 @@ import {
 } from "@/lib/actions";
 import { Search, Send, Reply, Compose, Chat, Question, ArrowLeft, Close } from "./icons";
 import { buttonClass } from "./controls";
+import { usePrefs } from "./Prefs";
+import { pick, type Locale, type Translate } from "@/lib/i18n";
 
 type Side = "hospital" | "supplier";
 
@@ -86,6 +88,7 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
   /** A chat opened with nobody's messages in it yet — shown in the list, as Teams does. */
   draft: { id: string; name: string } | null; className: string;
 }) {
+  const { t, locale } = usePrefs();
   const [filter, setFilter] = useState("");
   const [composing, setComposing] = useState(false);
   const q = filter.trim().toLowerCase();
@@ -100,14 +103,14 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
   return (
     <aside className={`${className} min-h-0 flex-col border-r hair bg-ink-25/60 dark:bg-ink-900/40`}>
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-        <h1 className="text-lg font-bold tracking-tight text-ink-950 dark:text-white">Messages</h1>
+        <h1 className="text-lg font-bold tracking-tight text-ink-950 dark:text-white">{t("Messages")}</h1>
         {side === "hospital" && manufacturers.length > 0 && (
           <button onClick={() => setComposing((v) => !v)} aria-expanded={composing}
-            title="New chat with a manufacturer"
+            title={t("New chat with a manufacturer")}
             className={`grid h-8 w-8 place-items-center rounded-xl transition ${
               composing ? "btn-gradient text-white" : "bg-white text-ink-500 shadow-[0_0_0_1px_var(--line-strong)] hover:text-brand-600 dark:bg-ink-900 dark:text-ink-300"}`}>
             <Compose className="h-4 w-4" />
-            <span className="sr-only">New chat</span>
+            <span className="sr-only">{t("New chat")}</span>
           </button>
         )}
       </div>
@@ -116,20 +119,20 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
           <input value={filter} onChange={(e) => setFilter(e.target.value)}
-            placeholder={composing ? "Find a manufacturer" : "Search conversations"}
-            aria-label={composing ? "Find a manufacturer" : "Search conversations"}
+            placeholder={composing ? t("Find a manufacturer") : t("Search conversations")}
+            aria-label={composing ? t("Find a manufacturer") : t("Search conversations")}
             className="w-full rounded-xl bg-white py-2 pl-8 pr-3 text-sm text-ink-900 shadow-[0_0_0_1px_var(--line)] outline-none transition placeholder:text-ink-400 focus:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_16px_-6px_rgb(87_89_242/0.35)] dark:bg-ink-900 dark:text-ink-50" />
         </label>
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 [scrollbar-color:var(--color-ink-100)_transparent] [scrollbar-width:thin]"
-        aria-label="Conversations">
+        aria-label={t("Conversations")}>
         {composing && (
           <div className="mb-2 rounded-2xl bg-white p-1.5 shadow-[var(--shadow-glow)] dark:bg-ink-900">
-            <div className="label px-2.5 pb-1 pt-1.5">Start a chat with</div>
+            <div className="label px-2.5 pb-1 pt-1.5">{t("Start a chat with")}</div>
             {startable.length === 0 ? (
               <p className="px-2.5 pb-2 text-xs text-ink-400">
-                {q ? "No manufacturer by that name." : "You already have a chat with every manufacturer here."}
+                {q ? t("No manufacturer by that name.") : t("You already have a chat with every manufacturer here.")}
               </p>
             ) : startable.map((m) => (
               <Link key={m.id} href={`${basePath}?${paramKey}=${m.id}`} scroll={false}
@@ -148,16 +151,16 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
             <Avatar name={draft.name} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{draft.name}</div>
-              <div className="mt-0.5 truncate text-xs italic text-ink-400">New conversation</div>
+              <div className="mt-0.5 truncate text-xs italic text-ink-400">{t("New conversation")}</div>
             </div>
           </div>
         )}
 
         {shown.length === 0 && !composing && !draft ? (
           <p className="px-3 py-6 text-center text-xs text-ink-400">
-            {q ? "No conversation matches." : side === "supplier"
-              ? "No hospital has written to you yet."
-              : "No conversations yet."}
+            {q ? t("No conversation matches.") : side === "supplier"
+              ? t("No hospital has written to you yet.")
+              : t("No conversations yet.")}
           </p>
         ) : (
           <ul className="space-y-0.5">
@@ -178,22 +181,22 @@ function ConversationList({ side, basePath, paramKey, conversations, activeId, m
                           {c.name}
                         </span>
                         <span className={`shrink-0 text-[11px] tnum ${c.unread ? "font-semibold text-brand-600 dark:text-brand-300" : "text-ink-400"}`}>
-                          {c.lastAt ? listTime(c.lastAt) : ""}
+                          {c.lastAt ? listTime(c.lastAt, locale) : ""}
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className={`min-w-0 flex-1 truncate text-xs ${c.unread ? "text-ink-700 dark:text-ink-100" : "text-ink-400"}`}>
-                          {c.lastFromMe ? "You: " : ""}{c.lastBody}
+                          {c.lastFromMe ? `${t("You")}: ` : ""}{c.lastBody}
                         </span>
                         {c.openQuestions > 0 && (
-                          <span title={`${c.openQuestions} question${c.openQuestions === 1 ? "" : "s"} waiting for an answer`}
+                          <span title={t(c.openQuestions === 1 ? "{n} question waiting for an answer" : "{n} questions waiting for an answer", { n: c.openQuestions })}
                             className="inline-flex shrink-0 items-center rounded-full bg-amber-50 px-2 py-[2px] text-[10.5px] font-semibold text-amber-800 tnum dark:bg-amber-500/15 dark:text-amber-200">
-                            {c.openQuestions} open
+                            {t("{n} open", { n: c.openQuestions })}
                           </span>
                         )}
                         {c.unread > 0 && (
                           <span className="grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-brand-500 px-1.5 text-[10px] font-bold text-white tnum"
-                            aria-label={`${c.unread} unread`}>
+                            aria-label={t("{n} unread", { n: c.unread })}>
                             {c.unread > 99 ? "99+" : c.unread}
                           </span>
                         )}
@@ -218,6 +221,7 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
   side: Side; thread: Thread; backHref: string; counterpartId: string;
 }) {
   const router = useRouter();
+  const { t, locale } = usePrefs();
   const [replyTo, setReplyTo] = useState<QuestionRef | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -262,8 +266,8 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
         .catch(() => ({
           ok: false,
           message: typeof navigator !== "undefined" && !navigator.onLine
-            ? "Not sent — you are offline. Your text is back in the box; send it again once you are back."
-            : "Not sent — the server could not be reached. Your text is back in the box; try again.",
+            ? t("Not sent — you are offline. Your text is back in the box; send it again once you are back.")
+            : t("Not sent — the server could not be reached. Your text is back in the box; try again."),
         }));
       if (!res.ok) {
         setError(res.message);
@@ -291,25 +295,25 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
       { duration: 1200, easing: "cubic-bezier(.16,1,.3,1)" });
   };
 
-  const items = useMemo(() => layout(thread.messages), [thread.messages]);
+  const items = useMemo(() => layout(thread.messages, t, locale), [thread.messages, t, locale]);
 
   return (
     <>
       <header className="flex items-center gap-3 border-b hair px-5 py-3.5">
-        <Link href={backHref} scroll={false} aria-label="Back to conversations"
+        <Link href={backHref} scroll={false} aria-label={t("Back to conversations")}
           className="-ml-1 grid h-8 w-8 place-items-center rounded-xl text-ink-500 hover:bg-ink-50 md:hidden dark:text-ink-300 dark:hover:bg-ink-800">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <Avatar name={thread.name} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-ink-950 dark:text-white">{thread.name}</div>
-          <div className="truncate text-xs text-ink-400">{thread.subtitle}</div>
+          <div className="truncate text-xs text-ink-400">{subtitle(thread.subtitle, t)}</div>
         </div>
         {firstOpen && (
           <button onClick={() => jumpTo(firstOpen.id)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-200">
             <Question className="h-3.5 w-3.5" />
-            {thread.openQuestions.length} open question{thread.openQuestions.length === 1 ? "" : "s"}
+            {t(thread.openQuestions.length === 1 ? "{n} open question" : "{n} open questions", { n: thread.openQuestions.length })}
           </button>
         )}
       </header>
@@ -317,18 +321,17 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
       <div ref={scroller}
         onScroll={(e) => { stuck.current = Math.abs(e.currentTarget.scrollTop) < 80; }}
         className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-4 py-4 [scrollbar-color:var(--color-ink-100)_transparent] [scrollbar-width:thin] sm:px-6"
-        role="log" aria-live="polite" aria-label={`Conversation with ${thread.name}`}>
+        role="log" aria-live="polite" aria-label={t("Conversation with {name}", { name: thread.name })}>
         <div ref={log} className="flex flex-1 flex-col">
         {items.length === 0 && pending.length === 0 ? (
           <div className="grid flex-1 place-items-center text-center">
             <div className="max-w-xs">
               <Avatar name={thread.name} size="lg" />
               <p className="mt-3 text-sm font-medium text-ink-800 dark:text-ink-100">
-                This is the start of your conversation with {thread.name}.
+                {t("This is the start of your conversation with {name}.", { name: thread.name })}
               </p>
               <p className="mt-1 text-xs text-ink-400">
-                Ask about a product, a price or a delivery. Questions sent from a product&apos;s open
-                problems land here too.
+                {t("Ask about a product, a price or a delivery. Questions sent from a product's open problems land here too.")}
               </p>
             </div>
           </div>
@@ -351,7 +354,7 @@ function ThreadPane({ side, thread, backHref, counterpartId }: {
                   <div className={`${ENTRY} ${ENTRY_MINE}`}>
                     <p className="whitespace-pre-wrap break-words">{p.body}</p>
                   </div>
-                  <div className="mt-0.5 text-right text-[10px] text-ink-400">Sending…</div>
+                  <div className="mt-0.5 text-right text-[10px] text-ink-400">{t("Sending…")}</div>
                 </div>
               </li>
             ))}
@@ -375,13 +378,13 @@ type Item =
  * collapsed under one name and time, as every messenger does. A question card
  * always stands on its own; it is a different kind of thing from chat.
  */
-function layout(messages: ThreadMessage[]): Item[] {
+function layout(messages: ThreadMessage[], t: Translate, locale: Locale): Item[] {
   const out: Item[] = [];
   let day = "";
   messages.forEach((m, i) => {
     const d = new Date(m.createdAt);
     const key = d.toDateString();
-    if (key !== day) { day = key; out.push({ type: "day", key: `d${key}`, label: dayLabel(d) }); }
+    if (key !== day) { day = key; out.push({ type: "day", key: `d${key}`, label: dayLabel(d, t, locale) }); }
     const prev = messages[i - 1], next = messages[i + 1];
     const joins = (a?: ThreadMessage, b?: ThreadMessage) => Boolean(a && b
       && a.fromMe === b.fromMe && a.authorName === b.authorName
@@ -459,6 +462,7 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 function QuestionCard({ q, side, mine, onReply }: {
   q: QuestionRef; side: Side; mine: boolean; onReply: (q: QuestionRef) => void;
 }) {
+  const { t, locale } = usePrefs();
   const status = STATUS[q.status] ?? { label: q.status, tone: STATUS.skipped.tone };
   const open = q.status === "open";
   return (
@@ -475,16 +479,16 @@ function QuestionCard({ q, side, mine, onReply }: {
         )}
         <div className="min-w-0 flex-1">
           <div className="truncate text-xs font-semibold text-ink-800 dark:text-ink-100">
-            {q.productName ?? "Question"}
+            {q.productName ?? t("Question")}
           </div>
           {q.lineName && (
-            <div className="truncate text-[11px] text-ink-400">to replace {q.lineName}</div>
+            <div className="truncate text-[11px] text-ink-400">{t("to replace {name}", { name: q.lineName })}</div>
           )}
         </div>
         {q.type === "blocking" && (
           <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${
             open ? "bg-rose-600 text-white" : "bg-ink-50 text-ink-500 dark:bg-ink-800 dark:text-ink-300"}`}>
-            Blocks the order
+            {t("Blocks the order")}
           </span>
         )}
       </div>
@@ -495,11 +499,11 @@ function QuestionCard({ q, side, mine, onReply }: {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t hair px-4 py-2.5">
-        <span className={`inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${status.tone}`}>{status.label}</span>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] ${status.tone}`}>{t(status.label)}</span>
         {q.href && (
           <Link href={q.href}
             className="text-[11px] font-medium text-ink-500 underline-offset-2 hover:text-brand-600 hover:underline dark:text-ink-300 dark:hover:text-brand-300">
-            {side === "supplier" ? "Your product page" : "Open the product"}
+            {side === "supplier" ? t("Your product page") : t("Open the product")}
           </Link>
         )}
         {open && (side === "supplier" || mine) && (
@@ -508,7 +512,8 @@ function QuestionCard({ q, side, mine, onReply }: {
           <button onClick={() => onReply(q)}
             className={`ml-auto ${buttonClass(side === "supplier" ? "primary" : "ghost", "sm")}`}>
             <Reply className="h-3.5 w-3.5" />
-            {side === "supplier" ? "Answer" : "Follow up"}
+            {/* The verb, where "Answer" elsewhere is the noun above an answer. */}
+            {side === "supplier" ? pick(locale, "Answer", "Antworten") : t("Follow up")}
           </button>
         )}
       </div>
@@ -537,6 +542,7 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
   textarea: React.RefObject<HTMLTextAreaElement | null>;
   onCancelReply: () => void; onSend: (body: string) => void;
 }) {
+  const { t } = usePrefs();
   const [empty, setEmpty] = useState(true);
   const grow = (el: HTMLTextAreaElement) => {
     el.style.height = "auto";
@@ -558,16 +564,18 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
           <Reply className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-brand-300" />
           <div className="min-w-0 flex-1 text-xs">
             <div className="font-semibold text-ink-900 dark:text-ink-50">
-              {side === "supplier" ? "Answering" : "Following up on"} {replyTo.productName ? `· ${replyTo.productName}` : ""}
+              {side === "supplier" ? t("Answering") : t("Following up on")} {replyTo.productName ? `· ${replyTo.productName}` : ""}
             </div>
             <div className="truncate text-ink-600 dark:text-ink-200">{replyTo.title ?? replyTo.text}</div>
             {side === "supplier" && (
               <div className="mt-0.5 text-[11px] text-ink-400">
-                Sending this answers the question{replyTo.type === "blocking" ? " and lifts what it blocks" : ""}.
+                {replyTo.type === "blocking"
+                  ? t("Sending this answers the question and lifts what it blocks.")
+                  : t("Sending this answers the question.")}
               </div>
             )}
           </div>
-          <button onClick={onCancelReply} aria-label="Cancel reply"
+          <button onClick={onCancelReply} aria-label={t("Cancel reply")}
             className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-brand-700 hover:bg-brand-100 dark:text-brand-200 dark:hover:bg-brand-500/20">
             <Close className="h-3 w-3" />
           </button>
@@ -576,8 +584,8 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
       <form onSubmit={(e) => { e.preventDefault(); submit(); }}
         className="flex items-end gap-2 rounded-2xl bg-[var(--sheet)] py-1.5 pl-4 pr-1.5 shadow-[var(--shadow-glow)] transition-shadow focus-within:shadow-[var(--shadow-glow-strong)]">
         <textarea ref={textarea} rows={1} maxLength={4000}
-          placeholder={replyTo ? (side === "supplier" ? "Type your answer" : "Write your follow-up") : `Message ${name}`}
-          aria-label="Message"
+          placeholder={replyTo ? (side === "supplier" ? t("Type your answer") : t("Write your follow-up")) : t("Message {name}", { name })}
+          aria-label={t("Message")}
           onChange={(e) => { setEmpty(!e.target.value.trim()); grow(e.target); }}
           onKeyDown={(e) => {
             // Enter sends, Shift+Enter breaks the line — the convention every
@@ -586,14 +594,14 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
             if (e.key === "Escape" && replyTo) onCancelReply();
           }}
           className="max-h-40 min-h-[1.5rem] flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50" />
-        <button type="submit" disabled={empty} aria-label="Send"
+        <button type="submit" disabled={empty} aria-label={t("Send")}
           className="btn-gradient inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold text-white">
-          <Send className="h-3.5 w-3.5" /><span className="hidden sm:inline">Send</span>
+          <Send className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t("Send")}</span>
         </button>
       </form>
       <div className="mt-1 flex justify-between gap-3 px-1 text-[11px]">
         <span className="text-rose-700 dark:text-rose-300" role="alert">{error ?? ""}</span>
-        <span className="hidden text-ink-400 sm:inline">Enter to send · Shift + Enter for a new line</span>
+        <span className="hidden text-ink-400 sm:inline">{t("Enter to send · Shift + Enter for a new line")}</span>
       </div>
     </div>
   );
@@ -601,22 +609,32 @@ function Composer({ side, name, replyTo, error, textarea, onCancelReply, onSend 
 
 // --- pieces -------------------------------------------------------------------
 
+/**
+ * "Hospital · Zürich", built server-side in English: the kind is translated,
+ * the place is a name and stays as it is.
+ */
+function subtitle(text: string, t: Translate): string {
+  const [what, ...rest] = text.split(" · ");
+  return [t(what), ...rest].join(" · ");
+}
+
 function Placeholder({ side, empty }: { side: Side; empty: boolean }) {
+  const { t } = usePrefs();
   return (
     <div className="grid flex-1 place-items-center p-8 text-center">
       <div className="max-w-sm">
         <Chat className="mx-auto h-9 w-9 text-ink-200 dark:text-ink-700" />
         <p className="mt-3 text-sm font-medium text-ink-700 dark:text-ink-100">
           {empty
-            ? side === "supplier" ? "No conversations yet" : "Start a conversation"
-            : "Choose a conversation"}
+            ? side === "supplier" ? t("No conversations yet") : t("Start a conversation")
+            : t("Choose a conversation")}
         </p>
         <p className="mt-1 text-xs leading-relaxed text-ink-400">
           {empty
             ? side === "supplier"
-              ? "When a hospital asks about one of your products, the question arrives here as a chat. Answering it there answers it on their side and lifts anything it was blocking."
-              : "Send a question from a product's open problems, or start a chat with a manufacturer using the pencil above the list."
-            : "Pick one from the list to read it and reply."}
+              ? t("When a hospital asks about one of your products, the question arrives here as a chat. Answering it there answers it on their side and lifts anything it was blocking.")
+              : t("Send a question from a product's open problems, or start a chat with a manufacturer using the pencil above the list.")
+            : t("Pick one from the list to read it and reply.")}
         </p>
       </div>
     </div>
@@ -652,21 +670,24 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg"
 const clock = (iso: string) =>
   new Date(iso).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
 
+/** Weekday and month names in the reader's language; the figures stay Swiss. */
+const nameLocale = (locale: Locale) => (locale === "de" ? "de-CH" : "en-GB");
+
 /** In the list: a time today, a weekday this week, a date before that. */
-function listTime(iso: string): string {
+function listTime(iso: string, locale: Locale): string {
   const d = new Date(iso), now = new Date();
   if (d.toDateString() === now.toDateString()) return clock(iso);
   const days = (now.getTime() - d.getTime()) / 86_400_000;
-  if (days < 6) return d.toLocaleDateString("en-GB", { weekday: "short" });
+  if (days < 6) return d.toLocaleDateString(nameLocale(locale), { weekday: "short" });
   return d.toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
-function dayLabel(d: Date): string {
+function dayLabel(d: Date, t: Translate, locale: Locale): string {
   const now = new Date();
   const y = new Date(now); y.setDate(now.getDate() - 1);
-  if (d.toDateString() === now.toDateString()) return "Today";
-  if (d.toDateString() === y.toDateString()) return "Yesterday";
-  return d.toLocaleDateString("en-GB", {
+  if (d.toDateString() === now.toDateString()) return t("Today");
+  if (d.toDateString() === y.toDateString()) return t("Yesterday");
+  return d.toLocaleDateString(nameLocale(locale), {
     weekday: "long", day: "numeric", month: "long",
     ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
   });

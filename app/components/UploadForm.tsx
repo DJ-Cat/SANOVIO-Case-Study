@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import type { UploadOutcome } from "@/lib/workflow";
 import { Stamp } from "./marks";
 import { buttonClass } from "./controls";
+import { usePrefs } from "./Prefs";
 
 export function UploadForm({ action, accept, hint }: {
   action: (prev: UploadOutcome | null, fd: FormData) => Promise<UploadOutcome>;
@@ -20,6 +21,7 @@ export function UploadForm({ action, accept, hint }: {
    */
   const [state, formAction, pending] = useActionState(action, null);
   const [file, setFile] = useState<File | null>(null);
+  const { t } = usePrefs();
 
   return (
     <form action={formAction} className="card space-y-4 p-3">
@@ -39,16 +41,16 @@ export function UploadForm({ action, accept, hint }: {
           className="sr-only"
           onChange={(e) => setFile(e.currentTarget.files?.[0] ?? null)} />
         <div className="text-sm font-bold text-ink-800 dark:text-ink-100">
-          Choose a file, or drop it here
+          {t("Choose a file, or drop it here")}
         </div>
         <div className="mt-1 text-xs text-ink-400">{hint}</div>
         <div className={`mt-3 text-sm ${file ? "font-medium text-brand-600 dark:text-brand-300" : "text-ink-400"}`}>
-          {file?.name ?? "No file chosen"}
+          {file?.name ?? t("No file chosen")}
         </div>
       </label>
 
       <button type="submit" disabled={pending} className={buttonClass("primary")}>
-        {pending ? "Extracting…" : "Upload and extract"}
+        {pending ? t("Extracting…") : t("Upload and extract")}
       </button>
 
       {pending && <Progress file={file} />}
@@ -58,7 +60,7 @@ export function UploadForm({ action, accept, hint }: {
       {!pending && state && (
         <div className={`flex items-start gap-3 rounded-xl px-4 py-3 text-sm ${
           state.ok ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-rose-50 dark:bg-rose-500/10"}`} role={state.ok ? "status" : "alert"}>
-          <Stamp tone={state.ok ? "good" : "danger"}>{state.ok ? "Extracted" : "Not read"}</Stamp>
+          <Stamp tone={state.ok ? "good" : "danger"}>{state.ok ? t("Extracted") : t("Not read")}</Stamp>
           <div className="min-w-0">
             <div className="font-medium text-ink-900 dark:text-ink-50">{state.message}</div>
             {state.detail && <div className="mt-0.5 text-xs text-ink-500 dark:text-ink-300">{state.detail}</div>}
@@ -85,6 +87,7 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
  */
 function Progress({ file }: { file: File | null }) {
   const [elapsed, setElapsed] = useState(0);
+  const { t } = usePrefs();
 
   useEffect(() => {
     const started = Date.now();
@@ -97,19 +100,18 @@ function Progress({ file }: { file: File | null }) {
   return (
     <div aria-live="polite" className="space-y-2">
       <div className="bar-indeterminate" role="progressbar" aria-busy="true"
-        aria-label={isPdf ? "Extracting the catalogue" : "Parsing the file"} />
+        aria-label={isPdf ? t("Extracting the catalogue") : t("Parsing the file")} />
       <div className="flex items-baseline justify-between gap-4 text-xs text-ink-400">
         <span>
           {isPdf
-            ? "Reading the catalogue page by page — figures, then one extraction call per page."
-            : "Parsing the spreadsheet in-process."}
+            ? t("Reading the catalogue page by page — figures, then one extraction call per page.")
+            : t("Parsing the spreadsheet in-process.")}
         </span>
         <span className="tnum shrink-0">{mmss(elapsed)}</span>
       </div>
       {isPdf && (
         <p className="text-xs text-ink-400">
-          A 22-page catalogue takes about three minutes. The page waits for it — leaving now
-          cancels the upload.
+          {t("A 22-page catalogue takes about three minutes. The page waits for it — leaving now cancels the upload.")}
         </p>
       )}
     </div>

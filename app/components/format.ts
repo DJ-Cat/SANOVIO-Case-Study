@@ -28,9 +28,10 @@ const DIMENSIONS: Record<string, [string, string?]> = {
   gauge: ["Gauge"], wall: ["Wall"], colour: ["Hub colour"], connector: ["Connector"],
   material: ["Material"], sterile: ["Sterile"], pzn: ["PZN"], fixation: ["Fixation"],
 };
-export function dimensionLabel(key: string): string {
+/** With a translator, the known quantities are named in the reader's language. */
+export function dimensionLabel(key: string, t?: (text: string) => string): string {
   const known = DIMENSIONS[key]?.[0];
-  if (known) return known;
+  if (known) return t ? t(known) : known;
   const plain = key.replace(/_/g, " ");
   return plain.charAt(0).toUpperCase() + plain.slice(1);
 }

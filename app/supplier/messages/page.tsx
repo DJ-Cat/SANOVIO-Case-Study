@@ -2,6 +2,7 @@ import { Empty } from "@/app/components/ui";
 import { Messenger } from "@/app/components/Messenger";
 import { conversations, thread, inboxStamp } from "@/lib/messaging";
 import { currentSupplier } from "@/lib/session";
+import { getPrefs } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function Messages(
   { searchParams }: { searchParams: Promise<{ h?: string }> },
 ) {
   const me = await currentSupplier();
-  if (!me) return <Empty>No manufacturer is signed in.</Empty>;
+  if (!me) return <Empty>{(await getPrefs()).t("No manufacturer is signed in.")}</Empty>;
 
   const { h } = await searchParams;
   const list = conversations("supplier", me.id);

@@ -33,6 +33,14 @@
   --color-ink-900: #1c1d24;
   --color-ink-950: #0d0e14;
 
+  /* Reading sizes, a step up from Tailwind's: nearly all body copy on the
+     platform is set in text-sm and its supporting lines in text-xs, and at
+     14px / 12px in a light grey Manrope they read as fine print. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.55;
+
   --color-good-500: #229f39;
   --color-good-100: #a8e6a3;
 

@@ -9,11 +9,15 @@ import {
   signOffPointAction, sendProblemAction, suggestionsPendingAction, orderReplacementAction,
 } from "@/lib/actions";
 import type { Orderability } from "@/lib/replacement";
-import { price, num } from "./format";
+import { num } from "./format";
+import { Money, usePrefs } from "./Prefs";
+import { pick } from "@/lib/i18n";
+import { say } from "@/lib/i18n/user-error";
 import type { ReplacementView, ReplacementPointView, AnalysisStatus, SuggestionView } from "@/lib/queries";
 import { Spinner } from "./OpenProblems";
-import { Stamp, RevMark, Mark, Balloon } from "./marks";
-import { buttonClass, DIALOG } from "./controls";
+import { requestPointsScroll } from "./PointsScroller";
+import { Stamp, RevMark, Mark, Balloon, VerdictStamp } from "./marks";
+import { buttonClass, DIALOG, POINT_EDGE } from "./controls";
 
 const POLL_MS = 3000;
 
@@ -72,6 +76,7 @@ export function SuggestionsPoller({ pending }: { pending: boolean }) {
 export function ReplacementBanner({ view, problemsHref, orderability }: {
   view: ReplacementView; problemsHref: string; orderability?: Orderability | null;
 }) {
+  const { t, locale } = usePrefs();
   const router = useRouter();
   const [pending, start] = useTransition();
   const { status, counts } = view;
@@ -80,11 +85,15 @@ export function ReplacementBanner({ view, problemsHref, orderability }: {
     return (
       <Strip rule="brand" live>
         <Spinner small />
-        <Stamp tone="brand">Calculating</Stamp>
+        <Stamp tone="brand">{t("Calculating")}</Stamp>
         <p className="min-w-0 flex-1 text-sm text-ink-600 dark:text-ink-200">
-          Checking price, replaceability, safety and correctness against{" "}
-          <span className="font-medium text-ink-900 dark:text-ink-50">{view.lineName}</span>. The
-          points appear here when it is done.
+          {pick(locale,
+            <>Checking price, replaceability, safety and correctness against{" "}
+              <span className="font-medium text-ink-900 dark:text-ink-50">{view.lineName}</span>. The
+              points appear here when it is done.</>,
+            <>Preis, Ersetzbarkeit, Sicherheit und Korrektheit werden geprüft gegen{" "}
+              <span className="font-medium text-ink-900 dark:text-ink-50">{view.lineName}</span>. Die
+              Punkte erscheinen hier, sobald die Prüfung fertig ist.</>)}
         </p>
         <AnalysisPoller ids={[{ id: view.id, status }]} />
       </Strip>
@@ -95,16 +104,16 @@ export function ReplacementBanner({ view, problemsHref, orderability }: {
     return (
       <Strip rule="danger">
         <Mark kind="rejected" className="h-3.5 w-3.5" />
-        <Stamp tone="danger">Not calculated</Stamp>
+        <Stamp tone="danger">{t("Not calculated")}</Stamp>
         <p className="min-w-0 flex-1 text-sm text-ink-700 dark:text-ink-100">
-          The match for {view.lineName} could not be calculated.
+          {t("The match for {line} could not be calculated.", { line: view.lineName })}
           {view.error && <span className="block text-xs text-ink-400">{view.error}</span>}
         </p>
         <button disabled={pending} onClick={() => start(async () => {
             await rerunReplacementAction(view.id); router.refresh();
           })}
           className={buttonClass("ghost", "sm")}>
-          {pending ? "Starting…" : "Try again"}
+          {pending ? t("Starting…") : t("Try again")}
         </button>
       </Strip>
     );
@@ -114,17 +123,18 @@ export function ReplacementBanner({ view, problemsHref, orderability }: {
   return (
     <Strip rule={settled ? "good" : counts.blockingOpen ? "danger" : "neutral"}>
       {settled
-        ? <Stamp tone="good">{counts.total ? "Signed off" : "Nothing to settle"}</Stamp>
+        ? <Stamp tone="good">{counts.total ? t("Signed off") : t("Nothing to settle")}</Stamp>
         : counts.blockingOpen
-          ? <Stamp tone="solid-danger">{counts.blockingOpen} blocking</Stamp>
-          : <Stamp tone="neutral">Open</Stamp>}
+          ? <Stamp tone="solid-danger">{t("{n} blocking", { n: counts.blockingOpen })}</Stamp>
+          : <Stamp tone="neutral">{t("Open")}</Stamp>}
       <p className="min-w-0 flex-1 text-sm text-ink-600 tnum dark:text-ink-200">
         {settled
-          ? counts.total ? `All ${counts.total} points signed off.` : "The analysis raised nothing to settle."
-          : <><span className="font-semibold text-ink-900 dark:text-ink-50">{counts.open}</span> open point{counts.open === 1 ? "" : "s"}
-            {counts.signedOff > 0 && <span className="text-ink-400"> · {counts.signedOff} signed off</span>}</>}
+          ? counts.total ? t("All {n} points signed off.", { n: counts.total }) : t("The analysis raised nothing to settle.")
+          : <><span className="font-semibold text-ink-900 dark:text-ink-50">{counts.open}</span> {counts.open === 1 ? t("open point") : t("open points")}
+            {counts.signedOff > 0 && <span className="text-ink-400"> · {t("{n} signed off", { n: counts.signedOff })}</span>}</>}
       </p>
-      <Link href={problemsHref} className={buttonClass("ghost", "sm")}>Review points</Link>
+      <Link href={problemsHref} scroll={false} onClick={requestPointsScroll}
+        className={buttonClass("ghost", "sm")}>{t("Review points")}</Link>
       {orderability && <OrderControl view={view} o={orderability} />}
     </Strip>
   );
@@ -160,6 +170,7 @@ const ORDER_LABEL: Record<string, string> = {
  * chain — clinical sign-off where required, then budget approval, then pool.
  */
 function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
+  const { t, locale, money } = usePrefs();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -169,11 +180,11 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
     return (
       <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t hair pt-3 text-xs">
         <span className="inline-flex items-center gap-2">
-          <Stamp tone="brand">Ordered</Stamp>
-          <span className="text-ink-600 dark:text-ink-200">{ORDER_LABEL[o.order.status] ?? o.order.status}</span>
+          <Stamp tone="brand">{t("Ordered")}</Stamp>
+          <span className="text-ink-600 dark:text-ink-200">{ORDER_LABEL[o.order.status] ? t(ORDER_LABEL[o.order.status]) : o.order.status}</span>
         </span>
         <Link href="/hospital/approvals" className="font-semibold text-brand-600 underline dark:text-brand-300">
-          Open approvals
+          {t("Open approvals")}
         </Link>
       </div>
     );
@@ -194,38 +205,43 @@ function OrderControl({ view, o }: { view: ReplacementView; o: Orderability }) {
     <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t hair pt-3">
       <span className="min-w-0 text-xs text-ink-500 dark:text-ink-300">
         {o.canOrder
-          ? `${o.currency} ${price(o.unitPrice!)} per unit · ${num(o.volume)} a year` +
+          ? t("{price} per unit · {volume} a year", { price: money(o.unitPrice!, o.currency), volume: num(o.volume) }) +
             (o.savingsPct != null ? ` · ${dearer ? "+" : "−"}${Math.abs(o.savingsPct)}%` : "")
-          : o.reasons[0]}
+          : say(t, o.reasonMessages[0])}
       </span>
       <button onClick={() => setOpen(true)} disabled={!o.canOrder}
-        title={o.canOrder ? undefined : o.reasons.join(" ")}
+        title={o.canOrder ? undefined : o.reasonMessages.map((m) => say(t, m)).join(" ")}
         className={buttonClass("primary", "sm")}>
-        Order this replacement
+        {t("Order this replacement")}
       </button>
       {open && (
-        <ConfirmDialog title="Order this replacement?" confirmLabel="Place order" busy={busy}
+        <ConfirmDialog title={t("Order this replacement?")} confirmLabel={t("Place order")} busy={busy}
           onCancel={() => { setOpen(false); setError(null); }} onConfirm={confirm}
           body={<>
             <span className="block">
-              {view.productName} replaces <span className="font-medium">{view.lineName}</span>,
-              sourced direct from {o.supplierName ?? view.manufacturer}.
+              {pick(locale,
+                <>{view.productName} replaces <span className="font-medium">{view.lineName}</span>,
+                  sourced direct from {o.supplierName ?? view.manufacturer}.</>,
+                <>{view.productName} ersetzt <span className="font-medium">{view.lineName}</span>,
+                  direkt bezogen von {o.supplierName ?? view.manufacturer}.</>)}
             </span>
             <span className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2.5 text-xs tnum">
-              <span className="text-ink-400">Annual volume</span><span className="text-right">{num(o.volume)} units</span>
-              <span className="text-ink-400">Unit price</span>
-              <span className="text-right">{o.currency} {price(o.unitPrice!)} <span className="text-ink-400">at the pool&apos;s current tier</span></span>
-              <span className="text-ink-400">Today</span><span className="text-right">{o.currency} {price(o.baseline!)}</span>
-              <span className="text-ink-400">{dearer ? "Extra cost" : "Saving"} per year</span>
+              <span className="text-ink-400">{t("Annual volume")}</span><span className="text-right">{t("{n} units", { n: num(o.volume) })}</span>
+              <span className="text-ink-400">{t("Unit price")}</span>
+              <span className="text-right"><Money amount={o.unitPrice!} from={o.currency} /> <span className="text-ink-400">{t("at the pool's current tier")}</span></span>
+              <span className="text-ink-400">{t("Today")}</span><span className="text-right"><Money amount={o.baseline!} from={o.currency} /></span>
+              <span className="text-ink-400">{dearer ? t("Extra cost per year") : t("Saving per year")}</span>
               <span className={`text-right font-semibold ${dearer ? "text-rose-700 dark:text-rose-300" : "text-good-500 dark:text-good-100"}`}>
-                {o.currency} {num(Math.abs(o.annualSavings ?? 0))}
+                <Money amount={Math.abs(o.annualSavings ?? 0)} from={o.currency} digits={0} />
               </span>
             </span>
             <span className="mt-3 block text-xs">
               {o.requiresClinical
-                ? "A change of article at this risk class goes to clinical sign-off first, then to budget approval."
-                : "It goes to budget approval, then joins the pool."}
-              {view.counts.open > 0 && ` ${view.counts.open} non-blocking point${view.counts.open === 1 ? " is" : "s are"} still open; they do not hold the order up.`}
+                ? t("A change of article at this risk class goes to clinical sign-off first, then to budget approval.")
+                : t("It goes to budget approval, then joins the pool.")}
+              {view.counts.open > 0 && ` ${view.counts.open === 1
+                ? t("1 non-blocking point is still open; it does not hold the order up.")
+                : t("{n} non-blocking points are still open; they do not hold the order up.", { n: view.counts.open })}`}
             </span>
             {error && (
               <span className="mt-3 block rounded-xl bg-rose-50 shadow-[0_0_0_1px_rgb(244_63_94/0.22)] dark:bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-800 dark:text-rose-200">
@@ -252,13 +268,16 @@ const ORDER = ["safety", "replaceability", "price", "correctness", "other"];
  * number, what it says, where it stands, when and by whom it last moved —
  * grouped by what it is about, in one card.
  */
-export function ReplacementPoints({ view, productName, canSend, readOnly = false, ordered = false }: {
+export function ReplacementPoints({ view, productName, canSend, readOnly = false, ordered = false, replacing }: {
   view: ReplacementView; productName: string; canSend: boolean;
+  /** The line being replaced, drawn at the head of the verdict's card. */
+  replacing?: React.ReactNode;
   /** A suggestion's pre-calculated analysis: nothing is chosen, so nothing is signable. */
   readOnly?: boolean;
   /** Once ordered, the analysis is what the order was placed on; it is not re-run or withdrawn. */
   ordered?: boolean;
 }) {
+  const { t, locale } = usePrefs();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [withdrawing, setWithdrawing] = useState(false);
@@ -266,15 +285,17 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
 
   if (view.status === "pending" || view.status === "running") {
     return (
-      <div className="panel flex flex-col items-center gap-3 py-14 text-center">
-        <Spinner />
-        <p className="text-sm font-medium text-ink-600 dark:text-ink-200">
-          Calculating the match against {view.lineName}
-        </p>
-        <p className="max-w-sm text-xs text-ink-400">
-          Reading both specifications, the prices, and what the manufacturer publishes about
-          this article.
-        </p>
+      <div className="space-y-5">
+        {replacing && <div className="card overflow-hidden">{replacing}</div>}
+        <div className="panel flex flex-col items-center gap-3 py-14 text-center">
+          <Spinner />
+          <p className="text-sm font-medium text-ink-600 dark:text-ink-200">
+            {t("Calculating the match against {line}", { line: view.lineName })}
+          </p>
+          <p className="max-w-sm text-xs text-ink-400">
+            {t("Reading both specifications, the prices, and what the manufacturer publishes about this article.")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -288,33 +309,39 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
   return (
     <div className="space-y-5">
       <div className="card overflow-hidden">
+        {replacing}
         <div className="px-5 py-4">
           {view.status === "failed" ? (
             <p className="text-sm text-rose-700 dark:text-rose-300">
-              The analysis failed{view.error ? `: ${view.error}` : "."}
+              {view.error ? t("The analysis failed: {error}", { error: view.error }) : t("The analysis failed.")}
             </p>
           ) : (
-            <p className="text-sm leading-relaxed text-ink-700 dark:text-ink-100">{view.summary}</p>
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="label">{t("AI verdict")}</span>
+                {view.verdict && <VerdictStamp verdict={view.verdict} t={t} />}
+                {view.confidence != null && <span className="text-xs text-ink-400 tnum">{t("{n} % confidence", { n: view.confidence })}</span>}
+              </div>
+              <p className="mt-2 max-w-[75ch] text-[0.95rem] leading-relaxed text-ink-800 dark:text-ink-100">{view.summary}</p>
+            </>
           )}
         </div>
         <div className="flex flex-wrap items-stretch gap-y-1 border-t hair px-2 py-1.5 text-[11px] text-ink-500 dark:text-ink-300">
-          {view.verdict && <Cell label="Verdict"><span className="capitalize">{view.verdict.replace("_", " ")}</span></Cell>}
-          {view.confidence != null && <Cell label="Confidence"><span className="tnum">{view.confidence} %</span></Cell>}
-          {view.adapter && <Cell label="Analysed by">{view.adapter}</Cell>}
-          {view.webSearches > 0 && <Cell label="Web searches"><span className="tnum">{view.webSearches}</span></Cell>}
-          {view.finishedAt && <Cell label="Date"><span className="code">{new Date(view.finishedAt).toLocaleString("de-CH")}</span></Cell>}
-          {!readOnly && !ordered && <span className="ml-auto flex items-center gap-2 px-3 py-2">
+          {!readOnly && !ordered && <span className="flex items-center gap-2 px-3 py-2">
             <button disabled={pending} onClick={() => start(async () => {
                 await rerunReplacementAction(view.id); router.refresh();
               })}
               className={buttonClass("ghost", "sm")}>
-              Run again
+              {t("Run again")}
             </button>
             <button disabled={pending} onClick={() => setWithdrawing(true)}
               className={buttonClass("danger", "sm")}>
-              Withdraw replacement
+              {t("Withdraw replacement")}
             </button>
           </span>}
+          {view.adapter && <Cell label={t("Analysed by")}>{view.adapter}</Cell>}
+          {view.webSearches > 0 && <Cell label={t("Web searches")}><span className="tnum">{view.webSearches}</span></Cell>}
+          {view.finishedAt && <Cell label={t("Date")}><span className="code">{new Date(view.finishedAt).toLocaleString("de-CH")}</span></Cell>}
         </div>
         {withdrawError && (
           <p className="border-t hair px-5 py-2 text-xs text-rose-700 dark:text-rose-300">{withdrawError}</p>
@@ -322,7 +349,7 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
         {view.sources.length > 0 && (
           <details className="border-t hair px-5 py-2.5 text-[11px] text-ink-400">
             <summary className="cursor-pointer select-none">
-              {view.sources.length} page{view.sources.length === 1 ? "" : "s"} consulted
+              {view.sources.length === 1 ? t("1 page consulted") : t("{n} pages consulted", { n: view.sources.length })}
             </summary>
             <ul className="mt-1.5 space-y-0.5">
               {view.sources.map((s) => (
@@ -340,38 +367,36 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
       {readOnly && view.points.length > 0 && (
         <div className="rounded-xl bg-brand-50/70 px-4 py-3 shadow-[0_0_0_1px_rgb(87_89_242/0.14)] dark:bg-brand-500/10">
           <p className="text-sm leading-relaxed text-brand-900 dark:text-brand-100">
-            Calculated in advance, because this is the best match found for {view.lineName}. Choose{" "}
-            <span className="font-semibold">Replace with this</span> to sign these points off or
-            send them to {view.manufacturer} — the analysis is taken over as it is, not run again.
+            {pick(locale,
+              <>Calculated in advance, because this is the best match found for {view.lineName}. Choose{" "}
+                <span className="font-semibold">Replace with this</span> to sign these points off or
+                send them to {view.manufacturer} — the analysis is taken over as it is, not run again.</>,
+              <>Im Voraus berechnet, weil dies der beste Treffer für {view.lineName} ist. Wählen Sie{" "}
+                <span className="font-semibold">{t("Replace with this")}</span>, um diese Punkte abzuzeichnen
+                oder an {view.manufacturer} zu senden — die Analyse wird unverändert übernommen, nicht neu berechnet.</>)}
           </p>
         </div>
       )}
 
       {view.points.length === 0 ? (
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50/70 px-4 py-7 text-sm font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
-          <Mark kind="done" className="h-3.5 w-3.5" /> Nothing stands out. The analysis found no issue with this switch.
+          <Mark kind="done" className="h-3.5 w-3.5" /> {t("Nothing stands out. The analysis found no issue with this switch.")}
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="space-y-6">
           {view.counts.blockingOpen > 0 && (
-            <p className="flex items-center gap-2 border-b hair bg-rose-50/60 px-5 py-3 text-sm text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
-              <Stamp tone="solid-danger">{view.counts.blockingOpen} blocking</Stamp>
-              Should not be ordered until signed off. A manufacturer&apos;s answer still needs your sign-off.
+            <p className="flex flex-wrap items-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-900 shadow-[0_0_0_1px_rgb(244_63_94/0.20)] dark:bg-rose-500/10 dark:text-rose-100">
+              <Stamp tone="solid-danger">{t("{n} blocking", { n: view.counts.blockingOpen })}</Stamp>
+              {t("Should not be ordered until signed off. A manufacturer's answer still needs your sign-off.")}
             </p>
           )}
-          {/* Column heads. */}
-          <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_9.5rem] gap-x-4 border-b hair px-5 py-3 md:grid">
-            <span className="label">#</span>
-            <span className="label">Point</span>
-            <span className="label">Status</span>
-          </div>
           {groups.map((g) => (
-            <section key={g.key}>
-              <h3 className="flex items-baseline gap-2 border-b hair bg-ink-25/70 px-5 py-2 dark:bg-ink-900/60">
-                <span className="text-[0.82rem] font-bold text-ink-800 dark:text-ink-100">{CATEGORY[g.key].label}</span>
-                <span className="text-xs text-ink-400">{CATEGORY[g.key].blurb}</span>
+            <section key={g.key} className="space-y-2.5">
+              <h3 className="flex flex-wrap items-baseline gap-x-2 px-1">
+                <span className="text-[0.95rem] font-bold text-ink-900 dark:text-white">{t(CATEGORY[g.key].label)}</span>
+                <span className="text-xs text-ink-500 dark:text-ink-300">{t(CATEGORY[g.key].blurb)}</span>
               </h3>
-              <ol className="divide-y divide-[var(--line)] border-b hair last:border-b-0">
+              <ol className="space-y-3">
                 {g.points.map((p) => (
                   <Point key={p.id} n={++rev} p={p} productName={productName} canSend={canSend}
                     manufacturer={view.manufacturer} readOnly={readOnly}
@@ -386,10 +411,9 @@ export function ReplacementPoints({ view, productName, canSend, readOnly = false
 
       {withdrawing && (
         <ConfirmDialog
-          title="Withdraw this replacement?"
-          body={<>{view.lineName} goes back to having no replacement. Points you signed off or
-            sent stay on record; the rest of the analysis is discarded.</>}
-          confirmLabel="Withdraw" danger
+          title={t("Withdraw this replacement?")}
+          body={t("{line} goes back to having no replacement. Points you signed off or sent stay on record; the rest of the analysis is discarded.", { line: view.lineName })}
+          confirmLabel={t("Withdraw")} danger
           onCancel={() => setWithdrawing(false)}
           onConfirm={async () => {
             const res = await withdrawReplacementAction(view.id);
@@ -425,6 +449,7 @@ function Point({ n, p, productName, manufacturer, canSend, readOnly, raisedAt, a
   n: number; p: ReplacementPointView; productName: string; manufacturer: string; canSend: boolean;
   readOnly: boolean; raisedAt: string | null; adapter: string | null; onDone: () => void;
 }) {
+  const { t, locale } = usePrefs();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const signedOff = p.status === "cleared";
@@ -432,10 +457,10 @@ function Point({ n, p, productName, manufacturer, canSend, readOnly, raisedAt, a
   const ph = phase(p);
   // The last thing that happened to the point, and who did it.
   const moved = signedOff
-    ? { at: p.clearedAt, by: p.clearedBy ?? "Hospital" }
+    ? { at: p.clearedAt, by: p.clearedBy ?? t("Hospital") }
     : p.status === "answered" ? { at: p.sentAt, by: manufacturer }
-    : p.sentAt ? { at: p.sentAt, by: "sent by you" }
-    : { at: raisedAt, by: adapter ? "analysis" : "raised" };
+    : p.sentAt ? { at: p.sentAt, by: t("sent by you") }
+    : { at: raisedAt, by: adapter ? t("analysis") : t("raised") };
 
   const act = (fn: (id: string) => Promise<void>) => {
     setBusy(true);
@@ -443,72 +468,74 @@ function Point({ n, p, productName, manufacturer, canSend, readOnly, raisedAt, a
   };
 
   return (
-    <li className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-2 px-5 py-4 md:grid-cols-[2.5rem_minmax(0,1fr)_9.5rem] md:items-start`}>
-      <span className="pt-0.5"><Balloon n={n} blocking={blocking} /></span>
-      <div className={`min-w-0 ${signedOff ? "text-ink-500" : ""}`}>
-        <p className={`text-sm font-semibold ${signedOff ? "text-ink-600 dark:text-ink-300" : "text-ink-900 dark:text-ink-50"}`}>{p.title ?? p.text}</p>
-        {p.detail && (
-          <p className="mt-1 max-w-[70ch] text-sm leading-relaxed text-ink-600 dark:text-ink-200">{p.detail}</p>
-        )}
-        <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
-          <span className="label">{p.routedTo === "supplier" ? "Manufacturer can clarify" : "Your decision"}</span>
-          {p.sources.map((s) => (
-            <a key={s.url} href={s.url} target="_blank" rel="noreferrer noopener" title={s.title}
-              className="text-brand-600 hover:underline dark:text-brand-300">
-              {host(s.url)}
-            </a>
-          ))}
-        </p>
-        {p.answerText && (
-          <div className="mt-2.5 rounded-xl bg-brand-50/70 px-3.5 py-2.5 text-sm leading-relaxed text-ink-700 dark:bg-brand-500/10 dark:text-ink-100">
-            <span className="mr-1.5 font-bold text-brand-700 dark:text-brand-200">{manufacturer}</span>{p.answerText}
+    <li data-point data-blocking={blocking || undefined}
+      className={`scroll-mt-20 rounded-2xl px-5 py-4 ${POINT_EDGE[blocking ? "blocking" : signedOff ? "done" : "open"]}`}>
+      <div className="flex gap-4">
+        <span className="pt-0.5"><Balloon n={n} blocking={blocking} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+            <div className="min-w-0 flex-[1_1_18rem]">
+              <p className={`text-[0.98rem] font-semibold leading-snug ${signedOff ? "text-ink-500 dark:text-ink-300" : "text-ink-950 dark:text-white"}`}>{p.title ?? p.text}</p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-500 dark:text-ink-300">
+                <Stamp tone={ph.tone}>{t(ph.word)}</Stamp>
+                <span className="font-medium">{p.routedTo === "supplier" ? t("Manufacturer can clarify") : t("Your decision")}</span>
+                {moved.at && <span className="tnum">· {new Date(moved.at).toLocaleDateString("de-CH")} · {moved.by}</span>}
+              </p>
+            </div>
+
+            {/* The point's actions, where the eye lands after its title. */}
+            {!signedOff && !readOnly ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button onClick={() => setConfirming(true)} disabled={busy} className={buttonClass("primary")}>
+                  {t("Sign off")}
+                </button>
+                <button onClick={() => act(sendProblemAction)}
+                  disabled={busy || Boolean(p.sentAt) || !canSend}
+                  title={!canSend ? t("This product has no manufacturer on the platform to ask") : undefined}
+                  className={buttonClass("secondary")}>
+                  {p.sentAt ? t("Sent") : t("Send to supplier")}
+                </button>
+              </div>
+            ) : null}
           </div>
-        )}
-        {/* Folded columns, below md. */}
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-ink-400 md:hidden">
-          <Stamp tone={ph.tone}>{ph.word}</Stamp>
-          {moved.at && <span className="code">{new Date(moved.at).toLocaleDateString("de-CH")}</span>}
-          <span>{moved.by}</span>
+
+          {p.detail && (
+            <p className={`mt-3 max-w-[75ch] text-[0.94rem] leading-relaxed ${signedOff ? "text-ink-500 dark:text-ink-300" : "text-ink-700 dark:text-ink-200"}`}>{p.detail}</p>
+          )}
+          {p.sources.length > 0 && (
+            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+              {p.sources.map((s) => (
+                <a key={s.url} href={s.url} target="_blank" rel="noreferrer noopener" title={s.title}
+                  className="text-brand-600 hover:underline dark:text-brand-300">
+                  {host(s.url)}
+                </a>
+              ))}
+            </p>
+          )}
+          {p.answerText && (
+            <div className="mt-3 rounded-xl bg-brand-50/70 px-3.5 py-2.5 text-[0.94rem] leading-relaxed text-ink-800 dark:bg-brand-500/10 dark:text-ink-100">
+              <span className="mr-1.5 font-bold text-brand-700 dark:text-brand-200">{manufacturer}</span>{p.answerText}
+            </div>
+          )}
         </div>
       </div>
-      <span className="hidden space-y-1 pt-0.5 text-[12px] leading-snug text-ink-500 md:block dark:text-ink-300">
-        <Stamp tone={ph.tone}>{ph.word}</Stamp>
-        {moved.at && <span className="code block pt-1">{new Date(moved.at).toLocaleDateString("de-CH")}</span>}
-        <span className="block truncate" title={moved.by}>{moved.by}</span>
-      </span>
-
-      {!signedOff && !readOnly ? (
-        <div className="col-start-2 flex flex-wrap gap-2">
-          <button onClick={() => setConfirming(true)} disabled={busy} className={buttonClass("ghost", "sm")}>
-            Sign off
-          </button>
-          <button onClick={() => act(sendProblemAction)}
-            disabled={busy || Boolean(p.sentAt) || !canSend}
-            title={!canSend ? "This product has no manufacturer on the platform to ask" : undefined}
-            className={buttonClass("ghost", "sm")}>
-            {p.sentAt ? "Sent" : "Send to supplier"}
-          </button>
-        </div>
-      ) : null}
 
       {confirming && (
         <ConfirmDialog
-          title="Sign off this point?"
+          title={t("Sign off this point?")}
           body={<>
-            You are recording that the hospital accepts {productName} as a replacement despite
-            this point. It stays on record with your name and the time, and is not sent to{" "}
-            {manufacturer}.
+            {t("You are recording that the hospital accepts {product} as a replacement despite this point. It stays on record with your name and the time, and is not sent to {manufacturer}.", { product: productName, manufacturer })}
             <span className="mt-3 flex gap-2.5 rounded-xl bg-ink-25 dark:bg-ink-800/60 px-3 py-2 text-xs leading-relaxed text-ink-700 dark:text-ink-100">
               <Balloon n={n} blocking={blocking} />
               <span>{p.title ?? p.text}</span>
             </span>
             {p.category === "safety" && (
               <span className="mt-3 block text-xs font-semibold text-rose-700 dark:text-rose-300">
-                A safety point is recorded as the clinical sign-off, not the buyer&apos;s.
+                {t("A safety point is recorded as the clinical sign-off, not the buyer's.")}
               </span>
             )}
           </>}
-          confirmLabel="Yes, sign it off" busy={busy}
+          confirmLabel={t("Yes, sign it off")} busy={busy}
           onCancel={() => setConfirming(false)}
           onConfirm={() => act(signOffPointAction)} />
       )}
@@ -520,6 +547,7 @@ function ConfirmDialog({ title, body, confirmLabel, danger = false, busy = false
   title: string; body: React.ReactNode; confirmLabel: string; danger?: boolean; busy?: boolean;
   onCancel: () => void; onConfirm: () => void;
 }) {
+  const { t } = usePrefs();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onCancel(); };
     window.addEventListener("keydown", onKey);
@@ -532,10 +560,10 @@ function ConfirmDialog({ title, body, confirmLabel, danger = false, busy = false
         <h2 className={`${DIALOG.head} text-base font-semibold text-ink-950 dark:text-white`}>{title}</h2>
         <div className={DIALOG.body}>{body}</div>
         <div className={DIALOG.foot}>
-          <button onClick={onCancel} disabled={busy} className={buttonClass("ghost")}>Cancel</button>
+          <button onClick={onCancel} disabled={busy} className={buttonClass("ghost")}>{t("Cancel")}</button>
           <button onClick={onConfirm} disabled={busy}
             className={danger ? `${buttonClass("primary")} !bg-rose-600 hover:!bg-rose-700` : buttonClass("primary")}>
-            {busy ? "Saving…" : confirmLabel}
+            {busy ? t("Saving…") : confirmLabel}
           </button>
         </div>
       </div>
@@ -556,32 +584,34 @@ function host(url: string): string {
 export function SuggestionBanner({ view, problemsHref }: {
   view: SuggestionView; problemsHref: string;
 }) {
+  const { t } = usePrefs();
   const a = view.analysis;
   const analysing = a?.status === "pending" || a?.status === "running";
   return (
     <div className="overflow-hidden rounded-2xl bg-[var(--sheet)] shadow-[0_0_0_1px_rgb(139_92_246/0.18),0_12px_40px_-12px_rgb(124_88_246/0.40),0_2px_6px_rgb(20_21_40/0.04)]">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 bg-gradient-to-r from-violet-50/80 via-brand-50/50 to-transparent px-5 py-3 dark:from-violet-500/10 dark:via-brand-500/5">
-        {view.relation === "identical" ? <Stamp tone="brand">Same article</Stamp> : <Stamp tone="violet">Substitute</Stamp>}
-        <Stamp tone="neutral">Suggested</Stamp>
-        <span className="text-xs text-ink-500 tnum dark:text-ink-300">{view.confidence} % match</span>
+        {view.relation === "identical" ? <Stamp tone="brand">{t("Same article")}</Stamp> : <Stamp tone="violet">{t("Substitute")}</Stamp>}
+        <Stamp tone="neutral">{t("Suggested")}</Stamp>
+        <span className="text-xs text-ink-500 tnum dark:text-ink-300">{t("{n} % match", { n: view.confidence })}</span>
         <span className="ml-auto flex items-center gap-3">
           {analysing ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-600 dark:text-ink-200">
-              <Spinner small /> Analysing the switch…
+              <Spinner small /> {t("Analysing the switch…")}
             </span>
           ) : a?.status === "done" ? (
             <span className="inline-flex items-center gap-2 text-xs tnum text-ink-600 dark:text-ink-200">
-              <span><span className="font-semibold">{a.counts.total}</span> point{a.counts.total === 1 ? "" : "s"}</span>
-              {a.counts.blockingOpen > 0 && <Stamp tone="solid-danger">{a.counts.blockingOpen} blocking</Stamp>}
+              <span><span className="font-semibold">{a.counts.total}</span> {a.counts.total === 1 ? t("point") : t("points")}</span>
+              {a.counts.blockingOpen > 0 && <Stamp tone="solid-danger">{t("{n} blocking", { n: a.counts.blockingOpen })}</Stamp>}
             </span>
           ) : null}
           {a?.status === "done" && (
-            <Link href={problemsHref} className={buttonClass("ghost", "sm")}>See points</Link>
+            <Link href={problemsHref} scroll={false} onClick={requestPointsScroll}
+              className={buttonClass("ghost", "sm")}>{t("See points")}</Link>
           )}
         </span>
       </div>
       <div className="flex items-start gap-3 px-5 py-3.5">
-        <span className="label shrink-0 pt-[2px]">Why</span>
+        <span className="label shrink-0 pt-[2px]">{t("Why")}</span>
         <p className="max-w-[80ch] text-sm leading-relaxed text-ink-700 dark:text-ink-100">{view.rationale}</p>
       </div>
       <SuggestionsPoller pending={analysing} />

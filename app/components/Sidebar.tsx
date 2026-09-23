@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PrefsSwitch, usePrefs } from "./Prefs";
 
 export interface NavItem {
   href: string; label: string; hint?: string; badge?: number;
@@ -21,6 +22,7 @@ export function Sidebar({ portal, subtitle, items, accent, demo = false }: {
   // the first paint is decided by CSS alone — rail out on desktop, drawer away
   // on mobile. The effect below resolves it to the same thing the CSS already
   // rendered, so nothing moves; from then on the toggle is an ordinary boolean.
+  const { t } = usePrefs();
   const [open, setOpen] = useState<boolean | null>(null);
   useEffect(() => setOpen(window.matchMedia("(min-width: 1024px)").matches), []);
   const pathname = usePathname();
@@ -42,7 +44,7 @@ export function Sidebar({ portal, subtitle, items, accent, demo = false }: {
 
       <button
         onClick={() => setOpen((v) => !(v ?? true))}
-        aria-label={open === false ? "Show menu" : "Hide menu"}
+        aria-label={open === false ? t("Show menu") : t("Hide menu")}
         aria-expanded={open !== false}
         className="fixed left-5 top-5 z-50 grid h-9 w-9 place-items-center rounded-xl bg-white text-ink-600 shadow-[0_0_0_1px_var(--line-strong),0_4px_14px_-6px_rgb(40_42_120/0.25)] transition hover:text-brand-600 dark:bg-ink-900 dark:text-ink-200"
       >
@@ -91,7 +93,7 @@ export function Sidebar({ portal, subtitle, items, accent, demo = false }: {
                     {it.badge ? (
                       <span className={`grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[10.5px] font-bold tnum ${
                         it.tone === "unread" ? "bg-brand-500 text-white" : "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200"}`}
-                        aria-label={it.tone === "unread" ? `${it.badge} unread` : undefined}>
+                        aria-label={it.tone === "unread" ? t("{n} unread", { n: it.badge }) : undefined}>
                         {it.badge}
                       </span>
                     ) : null}
@@ -102,10 +104,11 @@ export function Sidebar({ portal, subtitle, items, accent, demo = false }: {
           </ul>
         </nav>
 
-        <div className="px-3 pb-3">
+        <div className="space-y-1 px-3 pb-3">
+          <div className="px-3 py-1.5"><PrefsSwitch compact /></div>
           <Link href="/" className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink-400 transition hover:bg-ink-25 hover:text-brand-600 dark:hover:bg-ink-800/60">
             <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden><path d="M10 3.5L5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Switch portal
+            {t("Switch portal")}
           </Link>
         </div>
       </aside>
@@ -139,10 +142,11 @@ function PanelGlyph({ collapsed }: { collapsed: boolean }) {
 
 /** Marks the demo edition: its data is sample data, reset with `npm run demo:reset`. */
 export function DemoBadge() {
+  const { t } = usePrefs();
   return (
-    <span title="Demo edition — sample data. Reset it any time with npm run demo:reset."
+    <span title={t("Demo edition — sample data. Reset it any time with npm run demo:reset.")}
       className="rounded-full bg-amber-100 px-2 py-[1px] text-[10.5px] font-bold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
-      Demo data
+      {t("Demo data")}
     </span>
   );
 }

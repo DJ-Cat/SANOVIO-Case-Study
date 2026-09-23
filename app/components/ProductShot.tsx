@@ -1,4 +1,5 @@
 import type { ProductImage } from "@/lib/queries";
+import { getPrefs } from "@/lib/prefs";
 
 /**
  * The image panel on a product page.
@@ -8,9 +9,10 @@ import type { ProductImage } from "@/lib/queries";
  * not. The two are never allowed to look alike: a drawing says so, and so does
  * a photograph the model was only guessing belonged to this SKU.
  */
-export function ProductShot({ name, eclass, images = [] }: {
+export async function ProductShot({ name, eclass, images = [] }: {
   name: string; eclass: string | null; images?: ProductImage[];
 }) {
+  const { t } = await getPrefs();
   const kind = categoryOf(eclass, name);
   const shot = images[0];
 
@@ -22,11 +24,11 @@ export function ProductShot({ name, eclass, images = [] }: {
   if (!shot) {
     return (
       <figure className="lg:sticky lg:top-20">
-        <ViewLabel>Category illustration</ViewLabel>
         <div className={FRAME}><div className="panel grid h-full w-full place-items-center"><Glyph kind={kind} /></div></div>
-        <figcaption className="mt-2.5 lg:max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
-          No manufacturer image on file — this is the {LABEL[kind]} category, drawn from ECLASS
-          {eclass ? ` ${eclass}` : ""}. Not a photograph of the article.
+        <figcaption className="mt-2.5 lg:max-w-[22rem] text-xs leading-relaxed text-ink-500 dark:text-ink-300">
+          {eclass
+            ? t("No manufacturer image on file — this is the {category} category, drawn from ECLASS {eclass}. Not a photograph of the article.", { category: t(LABEL[kind]), eclass })
+            : t("No manufacturer image on file — this is the {category} category, drawn from ECLASS. Not a photograph of the article.", { category: t(LABEL[kind]) })}
         </figcaption>
       </figure>
     );
@@ -34,7 +36,6 @@ export function ProductShot({ name, eclass, images = [] }: {
 
   return (
     <figure className="lg:sticky lg:top-20">
-      <ViewLabel>{shot.role === "shared" ? "Family photograph" : "Manufacturer photograph"}</ViewLabel>
       <div className={FRAME}>
         {/* White, not the dotted panel: catalogue photographs carry their own
             white ground, which would sit on the panel as a pasted box. */}
@@ -56,35 +57,31 @@ export function ProductShot({ name, eclass, images = [] }: {
         </div>
       )}
 
-      <figcaption className="mt-2.5 lg:max-w-[22rem] text-[11px] leading-relaxed text-ink-400">
-        {shot.caption ? <span className="text-ink-500 dark:text-ink-300">{shot.caption}</span> : null}
+      <figcaption className="mt-2.5 lg:max-w-[22rem] text-xs leading-relaxed text-ink-500 dark:text-ink-300">
+        {shot.caption ? <span className="font-medium text-ink-700 dark:text-ink-100">{shot.caption}</span> : null}
         {shot.caption ? " · " : ""}
-        From the manufacturer&apos;s catalogue
-        {shot.page ? `, page ${shot.page}` : ""}
+        {shot.page
+          ? t("From the manufacturer's catalogue, page {page}", { page: shot.page })
+          : t("From the manufacturer's catalogue")}
         {shot.region ? ` (${shot.region})` : ""}.
         {/* What the picture is of, before how sure we are it is the right one.
             A family shot is not a photograph of this size, and the page has to
             say so even when the model was confident it belongs to the table. */}
         {shot.role === "shared" && (
-          <span className="mt-1 block font-medium text-ink-500 dark:text-ink-300">
-            Shows the product family, not this size specifically.
+          <span className="mt-1 block font-medium text-ink-700 dark:text-ink-100">
+            {t("Shows the product family, not this size specifically.")}
           </span>
         )}
         {shot.confidence !== "certain" && (
           <span className="mt-1 block font-medium text-amber-700 dark:text-amber-400">
             {shot.confidence === "likely"
-              ? "Matched to this article by layout, not by a caption."
-              : "Uncertain match — confirm this is the right article before ordering."}
+              ? t("Matched to this article by layout, not by a caption.")
+              : t("Uncertain match — confirm this is the right article before ordering.")}
           </span>
         )}
       </figcaption>
     </figure>
   );
-}
-
-/** What the picture is, above it. */
-function ViewLabel({ children }: { children: React.ReactNode }) {
-  return <div className="label mb-2">{children}</div>;
 }
 
 type Kind = "cannula" | "syringe" | "infusion" | "glove" | "mask" | "wound" | "disinfectant" | "generic";

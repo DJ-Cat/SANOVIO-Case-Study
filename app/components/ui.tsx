@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { savingsBand } from "@/lib/pooling";
 import { RISK_LABEL } from "@/lib/matching/thresholds";
+import { getPrefs } from "@/lib/prefs";
 
 // Re-exported so the many pages importing them from here keep working; the
 // definitions live in a module a client component can import safely.
@@ -19,10 +20,12 @@ import { Stamp, Mark } from "./marks";
  * matters on the right, and — on a detail page — the facts that frame
  * everything below it, in a card of their own.
  */
-export function Page({ title, lead, children, action, fields }: {
+export function Page({ title, lead, children, action, fields, notice }: {
   title: string; lead?: React.ReactNode; children: React.ReactNode; action?: React.ReactNode;
   /** Facts a detail page names up front — a manufacturer, a class, what it replaces. */
   fields?: { label: string; value: React.ReactNode }[];
+  /** What needs doing about this page, above even its facts — open points on a match. */
+  notice?: React.ReactNode;
 }) {
   return (
     <div className="space-y-7">
@@ -38,6 +41,7 @@ export function Page({ title, lead, children, action, fields }: {
           </div>
           {action && <div className="flex shrink-0 flex-wrap items-center gap-2 pt-1">{action}</div>}
         </div>
+        {notice}
         {fields && fields.length > 0 && (
           <dl className="card grid grid-cols-2 gap-px overflow-hidden sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {fields.map((f) => (
@@ -160,23 +164,26 @@ export function Callout({ label, value, code = false, tone }: {
 }
 
 /** Identity or substitution — the most important distinction on the platform, as a pill. */
-export function TypeBadge({ type }: { type: "identity" | "substitution" }) {
+export async function TypeBadge({ type }: { type: "identity" | "substitution" }) {
+  const { t } = await getPrefs();
   return type === "identity"
-    ? <Stamp tone="brand">Same article · direct</Stamp>
-    : <Stamp tone="violet">Substitute · different article</Stamp>;
+    ? <Stamp tone="brand">{t("Same article · direct")}</Stamp>
+    : <Stamp tone="violet">{t("Substitute · different article")}</Stamp>;
 }
 
-export function RiskBadge({ cls }: { cls: "I" | "IIa" | "IIb" | "III" }) {
+export async function RiskBadge({ cls }: { cls: "I" | "IIa" | "IIb" | "III" }) {
+  const { t } = await getPrefs();
   const tone = cls === "III" ? "danger" : cls === "IIb" ? "warn" : "neutral";
-  return <span title={RISK_LABEL[cls]}><Stamp tone={tone}>MDR {cls}</Stamp></span>;
+  return <span title={t(RISK_LABEL[cls])}><Stamp tone={tone}>MDR {cls}</Stamp></span>;
 }
 
 /**
  * A saving as a green pill, stronger in weight as the §4 band rises. With no
  * price to compare against, it says so rather than showing a dash.
  */
-export function SavingsBadge({ pct }: { pct: number | null }) {
-  if (pct == null) return <Stamp tone="neutral" title="No saving can be stated without a price">No price yet</Stamp>;
+export async function SavingsBadge({ pct }: { pct: number | null }) {
+  const { t } = await getPrefs();
+  if (pct == null) return <Stamp tone="neutral" title={t("No saving can be stated without a price")}>{t("No price yet")}</Stamp>;
   const band = savingsBand(pct);
   const strong = band === "strong" || band === "exceptional";
   return (
@@ -209,11 +216,13 @@ export function Table({ head, children }: { head: string[]; children: React.Reac
  * where the bar it must clear sits, and the score out of 100. The bar itself
  * is named in the tooltip, so "96 / 100" never reads as "96 out of 90".
  */
-export function ConfidenceBar({ value, threshold }: { value: number; threshold: number }) {
+export async function ConfidenceBar({ value, threshold }: { value: number; threshold: number }) {
+  const { t } = await getPrefs();
   const ok = value >= threshold;
+  const said = t(ok ? "clears the bar of {threshold}" : "below the bar of {threshold}", { threshold });
   return (
     <span className="inline-flex items-center gap-2 text-[0.8rem] tnum"
-      title={`${value} out of 100 — ${ok ? "clears" : "below"} the bar of ${threshold}`}>
+      title={`${t("{value} out of 100", { value })} — ${said}`}>
       <span className="relative h-1.5 w-16">
         <span className="absolute inset-0 overflow-hidden rounded-full bg-ink-50 dark:bg-ink-800">
           <span className={`absolute inset-y-0 left-0 rounded-full ${ok ? "bg-gradient-to-r from-brand-500 to-brand-400" : "bg-amber-400"}`}
@@ -224,7 +233,7 @@ export function ConfidenceBar({ value, threshold }: { value: number; threshold: 
       </span>
       <span className={`font-semibold ${ok ? "text-ink-900 dark:text-ink-50" : "text-amber-800 dark:text-amber-300"}`}>{value}</span>
       <span className="text-ink-400">/ 100</span>
-      <span className="sr-only">{ok ? `clears the bar of ${threshold}` : `below the bar of ${threshold}`}</span>
+      <span className="sr-only">{said}</span>
     </span>
   );
 }

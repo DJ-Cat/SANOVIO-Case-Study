@@ -15,6 +15,7 @@ import { parseSupplierSheet, type SupplierSheetRow } from "./parse-supplier-shee
 import { parseSpecAttributes } from "../matching/pipeline";
 import { normaliseMdr } from "../matching/thresholds";
 import { EXTRACTION_THRESHOLD } from "../matching/thresholds";
+import { UserError, msg, english, type Message } from "../i18n/user-error";
 
 export type UploadKind = "hospital_demand" | "supplier_catalogue";
 
@@ -24,6 +25,8 @@ export interface UploadResult {
   accepted: number;      // at or above the extraction threshold
   needsReview: number;   // below it
   note: string | null;
+  /** `note` as a template, so the upload form can show it in the reader's language. */
+  noteMessage: Message | null;
   newProducts: number;
   /** Product photographs recovered from the document, 0 for a spreadsheet. */
   images: number;
@@ -46,12 +49,12 @@ export async function ingestHospitalDemand(
   try {
     rows = isCsv ? parseHospitalCsv(bytes) : parseHospitalWorkbook(bytes);
   } catch (e) {
-    throw new Error(`Could not read ${filename}: ${(e as Error).message}`);
+    throw new UserError("Could not read {file}: {reason}", { file: filename, reason: (e as Error).message });
   }
   if (!rows.length) {
-    throw new Error(
-      `No article rows found in ${filename}. Expected columns such as Artikelbezeichnung, ` +
-      `Jahresmenge and Netto-Zielpreis (or the English equivalents).`);
+    throw new UserError(
+      "No article rows found in {file}. Expected columns such as Artikelbezeichnung, " +
+      "Jahresmenge and Netto-Zielpreis (or the English equivalents).", { file: filename });
   }
 
   const conn = db();
@@ -85,6 +88,7 @@ export async function ingestHospitalDemand(
     documentId: docId, rows: rows.length,
     accepted: rows.length - belowBar, needsReview: belowBar,
     note: belowBar ? `${belowBar} row(s) held for review` : null,
+    noteMessage: belowBar ? msg("{n} row(s) held for review", { n: belowBar }) : null,
     newProducts: 0, images: 0,
   };
 }
@@ -102,7 +106,7 @@ export async function ingestSupplierCatalogue(
   const isCsv = /\.csv$/i.test(filename) || contentType.includes("csv");
   const isSheet = isCsv || /\.xlsx$/i.test(filename) || contentType.includes("spreadsheet");
   if (!isPdf && !isSheet) {
-    throw new Error(`${filename} is not a PDF, CSV or Excel file.`);
+    throw new UserError("{file} is not a PDF, CSV or Excel file.", { file: filename });
   }
 
   // A PDF goes to extract_lib, which reads the render, the text layer and the
@@ -113,17 +117,17 @@ export async function ingestSupplierCatalogue(
   if (isSheet) {
     rows = parseSupplierSheet(bytes, isCsv);
     if (!rows.length) {
-      throw new Error(
-        `No catalogue rows found in ${filename}. Expected columns such as Artikelbezeichnung, ` +
-        `Artikelnummer and Preis.`);
+      throw new UserError(
+        "No catalogue rows found in {file}. Expected columns such as Artikelbezeichnung, " +
+        "Artikelnummer and Preis.", { file: filename });
     }
   } else {
     extracted = preExtracted ?? await runExtractLib(filename, bytes);
     rows = mapCatalog(extracted);
     if (!rows.length) {
-      throw new Error(
-        `extract_lib found no product rows in ${filename}. Pages without a product table ` +
-        `return nothing by design; if this catalogue does have tables, see report.json.`);
+      throw new UserError(
+        "extract_lib found no product rows in {file}. Pages without a product table " +
+        "return nothing by design; if this catalogue does have tables, see report.json.", { file: filename });
     }
   }
 
@@ -142,11 +146,13 @@ export async function ingestSupplierCatalogue(
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
   const failed = extracted?.failedPages ?? [];
-  const note = failed.length
-    ? `pages ${failed.join(", ")} could not be extracted at all — the rest were kept`
+  const noteMessage = failed.length
+    ? msg("pages {pages} could not be extracted at all — the rest were kept", { pages: failed.join(", ") })
     : troubled
-      ? `${troubled} row(s) from pages extract_lib could not validate against the text layer`
-      : belowBar ? `${belowBar} row(s) below the extraction threshold` : null;
+      ? msg("{n} row(s) from pages extract_lib could not validate against the text layer", { n: troubled })
+      : belowBar ? msg("{n} row(s) below the extraction threshold", { n: belowBar }) : null;
+  // Stored with the document in English, as every other audit field is.
+  const note = noteMessage && english(noteMessage);
 
   const itemIds: { itemId: string; row: MappedRow | SupplierSheetRow }[] = [];
   tx(() => {
@@ -182,7 +188,7 @@ export async function ingestSupplierCatalogue(
 
   return {
     documentId: docId, rows: rows.length,
-    accepted: rows.length - belowBar, needsReview: belowBar, note, newProducts, images,
+    accepted: rows.length - belowBar, needsReview: belowBar, note, noteMessage, newProducts, images,
   };
 }
 

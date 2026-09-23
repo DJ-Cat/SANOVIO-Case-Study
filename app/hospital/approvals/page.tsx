@@ -1,6 +1,8 @@
 import { Page, Empty, RiskBadge, TypeBadge, Stamp, Mark, SubmitButton, num } from "@/app/components/ui";
 import { ordersForApproval } from "@/lib/queries";
 import { approveOrder, rejectOrder, clinicalSignOff, lockPoolAndFulfil, markFulfilled } from "@/lib/actions";
+import { Money } from "@/app/components/Prefs";
+import { getPrefs } from "@/lib/prefs";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +17,14 @@ const STAGE_LABEL: Record<string, string> = {
   rejected: "Rejected",
 };
 
-export default function Approvals() {
+export default async function Approvals() {
+  const { t } = await getPrefs();
   const orders = ordersForApproval();
 
   return (
-    <Page title="Approvals & fulfilment"
-      lead="Budget approval and clinical sign-off are separate gates asking different questions. Identity matches skip the clinical gate entirely — there is no clinical decision in buying the same article through a different channel.">
-      {orders.length === 0 ? <Empty>No orders submitted yet.</Empty> : (
+    <Page title={t("Approvals & fulfilment")}
+      lead={t("Budget approval and clinical sign-off are separate gates asking different questions. Identity matches skip the clinical gate entirely — there is no clinical decision in buying the same article through a different channel.")}>
+      {orders.length === 0 ? <Empty>{t("No orders submitted yet.")}</Empty> : (
         <div className="space-y-3">
           {orders.map((o) => {
             const stageIdx = STAGES.indexOf(o.status);
@@ -34,22 +37,22 @@ export default function Approvals() {
                       <RiskBadge cls={o.mdr_risk_class} />
                       {o.requires_clinical_review ? (
                         <span className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-rose-50 text-rose-700 dark:text-rose-200">
-                          Clinical gate
+                          {t("Clinical gate")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold leading-[1.35] bg-ink-50 text-ink-600 dark:text-ink-200">
-                          No clinical gate
+                          {t("No clinical gate")}
                         </span>
                       )}
                     </div>
                     <div className="mt-2.5 font-bold text-ink-950 dark:text-white">{o.recommended_name}</div>
                     <div className="text-xs text-ink-400">
-                      replaces {o.item_name} · {o.supplier_name} · requested by {o.requested_by_name}
+                      {t("replaces {name}", { name: o.item_name })} · {o.supplier_name} · {t("requested by {name}", { name: o.requested_by_name })}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="tnum text-lg font-bold text-emerald-700 dark:text-emerald-300">CHF {num(o.savings_amount)}</div>
-                    <div className="text-xs text-ink-400 tnum">−{o.savings_pct}% · {num(o.volume)} units</div>
+                    <div className="tnum text-lg font-bold text-emerald-700 dark:text-emerald-300"><Money amount={o.savings_amount} from="CHF" digits={0} /></div>
+                    <div className="text-xs text-ink-400 tnum">−{o.savings_pct}% · {t("{n} units", { n: num(o.volume) })}</div>
                   </div>
                 </div>
 
@@ -69,39 +72,39 @@ export default function Approvals() {
                             : passed ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200"
                             : "bg-ink-50 text-ink-400 dark:bg-ink-800 dark:text-ink-300"}`}>
                             {passed && <Mark kind="done" className="h-2 w-2" />}
-                            {STAGE_LABEL[s]}
+                            {t(STAGE_LABEL[s])}
                           </span>
                         </li>
                       );
                     })}
                   </ol>
                   {o.status === "rejected" && (
-                    <Stamp tone="danger">Rejected{o.rejected_reason ? `: ${o.rejected_reason}` : ""}</Stamp>
+                    <Stamp tone="danger">{t("Rejected")}{o.rejected_reason ? `: ${o.rejected_reason}` : ""}</Stamp>
                   )}
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {o.status === "pending_clinical" && (
                     <form action={clinicalSignOff.bind(null, o.id)}>
-                      <SubmitButton variant="ghost">Clinical sign-off (Dr. Marti)</SubmitButton>
+                      <SubmitButton variant="ghost">{t("Clinical sign-off (Dr. Marti)")}</SubmitButton>
                     </form>
                   )}
                   {o.status === "pending_approval" && (
                     <>
                       <form action={approveOrder.bind(null, o.id)}>
-                        <SubmitButton variant="ghost">Approve (D. Roth)</SubmitButton>
+                        <SubmitButton variant="ghost">{t("Approve (D. Roth)")}</SubmitButton>
                       </form>
                       <form action={rejectOrder} className="flex items-center gap-1.5">
                         <input type="hidden" name="orderId" value={o.id} />
-                        <input name="reason" placeholder="reason (optional)"
+                        <input name="reason" placeholder={t("reason (optional)")}
                           className="w-40 rounded-lg border hair-strong bg-[var(--sheet)] outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 px-2 py-1 text-xs" />
-                        <SubmitButton variant="danger">Reject</SubmitButton>
+                        <SubmitButton variant="danger">{t("Reject")}</SubmitButton>
                       </form>
                     </>
                   )}
                   {o.status === "pooled" && (
                     <form action={lockPoolAndFulfil.bind(null, o.id)}>
-                      <SubmitButton variant="ghost">Place with manufacturer</SubmitButton>
+                      <SubmitButton variant="ghost">{t("Place with manufacturer")}</SubmitButton>
                     </form>
                   )}
                   {o.status === "sanovio_fulfillment" && (
@@ -110,7 +113,7 @@ export default function Approvals() {
                         {o.sanovio_fulfillment_ref}
                       </span>
                       <form action={markFulfilled.bind(null, o.id)}>
-                        <SubmitButton variant="ghost">Mark delivered</SubmitButton>
+                        <SubmitButton variant="ghost">{t("Mark delivered")}</SubmitButton>
                       </form>
                     </>
                   )}

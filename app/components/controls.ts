@@ -11,6 +11,8 @@
 export const BUTTON = {
   primary: "btn-gradient text-white disabled:text-ink-400",
   ghost: "bg-white text-ink-700 shadow-[0_0_0_1px_var(--line-strong),0_1px_2px_rgb(20_21_40/0.04)] hover:text-brand-700 hover:shadow-[0_0_0_1px_var(--color-brand-200),0_4px_14px_-4px_rgb(87_89_242/0.30)] active:bg-ink-25 dark:bg-ink-900 dark:text-ink-100 dark:hover:text-brand-200",
+  /** The action on a row that is not the row's main one, but is still meant to be found. */
+  secondary: "bg-brand-50 text-brand-700 shadow-[0_0_0_1px_rgb(87_89_242/0.22)] hover:bg-brand-100 hover:shadow-[0_0_0_1px_rgb(87_89_242/0.35),0_4px_14px_-4px_rgb(87_89_242/0.30)] dark:bg-brand-500/15 dark:text-brand-100 dark:hover:bg-brand-500/25",
   danger: "bg-white text-rose-700 shadow-[0_0_0_1px_var(--color-rose-200),0_1px_2px_rgb(20_21_40/0.04)] hover:bg-rose-50 dark:bg-ink-900 dark:text-rose-300 dark:shadow-[0_0_0_1px_rgb(244_63_94/0.35)] dark:hover:bg-rose-500/10",
 } as const;
 
@@ -26,3 +28,10 @@ export const DIALOG = {
   body: "px-6 pt-2 pb-2 text-sm leading-relaxed text-ink-500 dark:text-ink-300",
   foot: "flex justify-end gap-2 px-6 pb-6 pt-4",
 };
+
+/** Each point is its own card; the edge says whether it still holds the order up. */
+export const POINT_EDGE = {
+  blocking: "bg-[var(--sheet)] shadow-[0_0_0_1px_rgb(244_63_94/0.30),0_8px_24px_-12px_rgb(244_63_94/0.40)]",
+  open: "bg-[var(--sheet)] shadow-[0_0_0_1px_var(--line-strong),0_8px_24px_-14px_rgb(40_42_120/0.25)]",
+  done: "bg-ink-25/80 shadow-[0_0_0_1px_var(--line)] dark:bg-ink-900/60",
+} as const;

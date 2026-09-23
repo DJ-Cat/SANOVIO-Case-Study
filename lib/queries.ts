@@ -190,6 +190,36 @@ export function supplierProduct(itemId: string, supplierId: string): SupplierPro
   };
 }
 
+/**
+ * How far a product has travelled into hospitals' decisions — what a
+ * manufacturer changing its class, unit or article number would be changing
+ * underneath. Counted across every hospital, since the manufacturer's edit
+ * reaches all of them; only numbers are returned, never which hospital.
+ */
+export interface ProductExposure {
+  /** Lines resolved to this exact article. */
+  linked: number;
+  /** Matched by the suggestion pipeline, and not dismissed. */
+  suggested: number;
+  /** Chosen with "Replace with this"; their analysis read the current values. */
+  chosen: number;
+  /** Orders placed and not yet delivered or rejected. */
+  openOrders: number;
+}
+
+export function productExposure(canonicalId: string): ProductExposure {
+  const n = (sql: string) => (db().prepare(sql).get(canonicalId) as { n: number }).n;
+  return {
+    linked: n(`SELECT COUNT(*) AS n FROM hospital_purchase_items WHERE canonical_product_id = ?`),
+    suggested: n(`SELECT COUNT(*) AS n FROM match_pairs
+                  WHERE canonical_product_id = ? AND outcome = 'matched' AND dismissed_at IS NULL`),
+    chosen: n(`SELECT COUNT(*) AS n FROM replacements WHERE canonical_product_id = ?`),
+    openOrders: n(`SELECT COUNT(*) AS n FROM orders o JOIN recommendations r ON r.id = o.recommendation_id
+                   WHERE r.recommended_canonical_product_id = ?
+                     AND o.status NOT IN ('fulfilled','rejected')`),
+  };
+}
+
 export function ordersForApproval() {
   return db().prepare(
     `SELECT o.*, r.type, r.savings_amount, r.savings_pct, r.requires_clinical_review,
@@ -752,7 +782,9 @@ function effectiveStatus(status: string, startedAt: string | null): AnalysisStat
 }
 
 export interface ReplacementOption {
-  id: string; name: string; detail: string;
+  id: string; name: string;
+  /** Composed by the dialog, in the reader's language. */
+  brand: string | null; supplier: string | null; annualVolume: number | null; uom: string | null;
   /** What this line is already being replaced with, if anything. */
   currentReplacement: { canonicalId: string; name: string } | null;
   /** The line already resolves to this very product: the switch is channel only. */
@@ -771,9 +803,8 @@ export function replacementOptions(canonicalId: string): ReplacementOption[] {
      WHERE h.hospital_id = ? ORDER BY h.extracted_name COLLATE NOCASE ASC`, HOSPITAL_ID)
     .map((r) => ({
       id: r.id, name: r.extracted_name,
-      detail: [r.extracted_brand, r.current_supplier_name ? `via ${r.current_supplier_name}` : null,
-        r.annual_volume ? `${r.annual_volume.toLocaleString("de-CH")} ${r.extracted_uom ?? ""}/yr`.trim() : null]
-        .filter(Boolean).join(" · "),
+      brand: r.extracted_brand ?? null, supplier: r.current_supplier_name ?? null,
+      annualVolume: r.annual_volume ?? null, uom: r.extracted_uom ?? null,
       currentReplacement: r.rep_id ? { canonicalId: r.rep_id, name: r.rep_name } : null,
       sameArticle: r.canonical_product_id === canonicalId,
     }));

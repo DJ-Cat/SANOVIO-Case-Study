@@ -6,6 +6,8 @@ import {
 import { rerunPipeline, runSuggestionsAction } from "@/lib/actions";
 import { SUGGEST } from "@/lib/matching/suggest";
 import { SuggestionsPoller } from "@/app/components/ReplacementReview";
+import { getPrefs } from "@/lib/prefs";
+import type { Translate } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +19,14 @@ const METHOD_LABEL: Record<string, string> = {
 const STAGE_LABEL: Record<number, string> = {
   1: "1 · rules", 2: "2 · retrieval", 3: "3 · Jev", 4: "4 · Claude",
 };
+const stageLabel = (t: Translate, n: number | null | undefined) =>
+  n != null && STAGE_LABEL[n] ? t(STAGE_LABEL[n]) : null;
 
 export default async function Pipeline(
   { searchParams }: { searchParams: Promise<{ stage?: string }> },
 ) {
   const { stage } = await searchParams;
+  const { t } = await getPrefs();
   const stageFilter = stage && /^[1-4]$/.test(stage) ? Number(stage) : null;
   const suggestRuns = suggestionRuns();
   const lastSuggest = suggestRuns[0];
@@ -39,40 +44,40 @@ export default async function Pipeline(
   const free = hospital.filter((m) => /_exact$/.test(m.link_method)).reduce((s, m) => s + m.n, 0);
 
   return (
-    <Page title="Matching pipeline"
-      lead="Cheapest layer first: exact identifier, then embedding retrieval, then a reranker, and only then Claude. The point of the layering is the last column — how few items ever reach the expensive layer."
+    <Page title={t("Matching pipeline")}
+      lead={t("Cheapest layer first: exact identifier, then embedding retrieval, then a reranker, and only then Claude. The point of the layering is the last column — how few items ever reach the expensive layer.")}
       action={
         <form action={rerunPipeline}>
-          <SubmitButton>Re-run pipeline</SubmitButton>
+          <SubmitButton>{t("Re-run pipeline")}</SubmitButton>
         </form>
       }>
 
       <DataSheet>
-        <Stat label="Hospital lines matched" value={String(totalConfirmed)} sub="supplier self-declaration excluded" />
-        <Stat label="Resolved by identifier" value={totalConfirmed ? `${Math.round((free / totalConfirmed) * 100)}%` : "—"}
-          sub="zero marginal cost" />
-        <Stat label="LLM calls, last run" value={last ? String(last.llm_calls) : "—"}
-          sub={last ? `of ${last.items_seen} items seen` : ""} />
-        <Stat label="Adapter" value={last ? (last.adapter.includes("claude") ? "live" : "stub") : "—"}
+        <Stat label={t("Hospital lines matched")} value={String(totalConfirmed)} sub={t("supplier self-declaration excluded")} />
+        <Stat label={t("Resolved by identifier")} value={totalConfirmed ? `${Math.round((free / totalConfirmed) * 100)}%` : "—"}
+          sub={t("zero marginal cost")} />
+        <Stat label={t("LLM calls, last run")} value={last ? String(last.llm_calls) : "—"}
+          sub={last ? t("of {n} items seen", { n: last.items_seen }) : ""} />
+        <Stat label={t("Adapter")} value={last ? (last.adapter.includes("claude") ? t("live") : t("stub")) : "—"}
           sub={last?.adapter ?? ""} />
       </DataSheet>
 
       <section className="space-y-3">
-        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Thresholds in force (§2)</h2>
-        <Table head={["Gate", "Question it answers", "Bar"]}>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">{t("Thresholds in force (§2)")}</h2>
+        <Table head={[t("Gate"), t("Question it answers"), t("Bar")]}>
           <tr><td className="px-3 py-2 code text-xs">extraction_confidence</td>
-            <td className="px-3 py-2">Did we read this row correctly?</td>
+            <td className="px-3 py-2">{t("Did we read this row correctly?")}</td>
             <td className="px-3 py-2 tnum">{EXTRACTION_THRESHOLD}</td></tr>
           <tr><td className="px-3 py-2 code text-xs">link_confidence</td>
-            <td className="px-3 py-2">Is this row the same article as this canonical product?</td>
+            <td className="px-3 py-2">{t("Is this row the same article as this canonical product?")}</td>
             <td className="px-3 py-2 tnum">{LINK_THRESHOLD}</td></tr>
           {(["I", "IIa", "IIb", "III"] as const).map((c) => (
             <tr key={c}>
               <td className="px-3 py-2 code text-xs">substitution · MDR {c}</td>
-              <td className="px-3 py-2">Are these different articles clinically interchangeable?</td>
+              <td className="px-3 py-2">{t("Are these different articles clinically interchangeable?")}</td>
               <td className="px-3 py-2 tnum">
                 {SUBSTITUTION_THRESHOLD[c] === null
-                  ? <span className="font-semibold text-rose-600 dark:text-rose-400">never auto-confirms</span>
+                  ? <span className="font-semibold text-rose-600 dark:text-rose-400">{t("never auto-confirms")}</span>
                   : SUBSTITUTION_THRESHOLD[c]}
               </td>
             </tr>
@@ -81,15 +86,15 @@ export default async function Pipeline(
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Which layer resolved what</h2>
-        <Table head={["Layer", "Confirmed", "Proposed (held for review)", "Rejected"]}>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">{t("Which layer resolved what")}</h2>
+        <Table head={[t("Layer"), t("Confirmed"), t("Proposed (held for review)"), t("Rejected")]}>
           {Object.keys(METHOD_LABEL).map((m) => {
             const row = (st: string) => methods.find((x) => x.link_method === m && x.status === st)?.n ?? 0;
             const total = row("confirmed") + row("proposed") + row("rejected");
             if (total === 0) return null;
             return (
               <tr key={m}>
-                <td className="px-3 py-2">{METHOD_LABEL[m]}</td>
+                <td className="px-3 py-2">{t(METHOD_LABEL[m])}</td>
                 <td className="px-3 py-2 tnum font-medium">{row("confirmed")}</td>
                 <td className="px-3 py-2 tnum">{row("proposed")}</td>
                 <td className="px-3 py-2 tnum text-ink-300">{row("rejected")}</td>
@@ -103,28 +108,25 @@ export default async function Pipeline(
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
-              Suggestion pipeline
+              {t("Suggestion pipeline")}
             </h2>
             <p className="mt-1 max-w-3xl text-xs text-ink-400">
-              Every hospital line against every supplier product, cheapest stage first. Runs by
-              itself after every upload. Stage 3 keeps pairs Jev scores at or above{" "}
-              <span className="font-semibold tnum">{SUGGEST.jevThreshold}</span>; stage 2 keeps
-              each line&apos;s top <span className="font-semibold tnum">{SUGGEST.topK}</span>; stage 4
-              suggests at <span className="font-semibold tnum">{SUGGEST.minConfidence}</span>+
-              confidence. Only the best match per line gets the full analysis.
+              {t("Every hospital line against every supplier product, cheapest stage first. Runs by itself after every upload. Stage 3 keeps pairs Jev scores at or above {jev}; stage 2 keeps each line's top {topK}; stage 4 suggests at {min}+ confidence. Only the best match per line gets the full analysis.", {
+                jev: SUGGEST.jevThreshold, topK: SUGGEST.topK, min: SUGGEST.minConfidence,
+              })}
             </p>
           </div>
           <form action={runSuggestionsAction}>
             <SubmitButton disabled={lastSuggest?.status === "running"}>
-              {lastSuggest?.status === "running" ? "Running…" : "Run suggestions now"}
+              {lastSuggest?.status === "running" ? t("Running…") : t("Run suggestions now")}
             </SubmitButton>
           </form>
         </div>
         <SuggestionsPoller pending={lastSuggest?.status === "running"} />
-        {lastSuggest ? <Funnel run={lastSuggest} /> : <Empty>No suggestion run yet.</Empty>}
+        {lastSuggest ? <Funnel run={lastSuggest} t={t} /> : <Empty>{t("No suggestion run yet.")}</Empty>}
 
         {suggestRuns.length > 0 && (
-          <Table head={["Started", "Trigger", "Pairs", "S1", "S2", "S3", "Matched", "Analysed", "Jev", "Claude", "Analyses", "Reused", "Status"]}>
+          <Table head={[t("Started"), t("Trigger"), t("Pairs"), "S1", "S2", "S3", t("Matched"), t("Analysed"), "Jev", "Claude", t("Analyses"), t("Reused"), t("Status")]}>
             {suggestRuns.map((r) => (
               <tr key={r.id}>
                 <td className="px-3 py-2 text-xs text-ink-400">{new Date(r.startedAt).toLocaleString("de-CH")}</td>
@@ -140,7 +142,7 @@ export default async function Pipeline(
                 <td className="px-3 py-2 tnum">{r.analysisCalls}</td>
                 <td className="px-3 py-2 tnum text-ink-400">{r.reused}</td>
                 <td className={`px-3 py-2 text-xs ${r.status === "failed" ? "text-rose-600 dark:text-rose-400" : ""}`}
-                  title={r.error ?? r.adapters ?? ""}>{r.status}</td>
+                  title={r.error ?? r.adapters ?? ""}>{t(r.status)}</td>
               </tr>
             ))}
           </Table>
@@ -151,17 +153,17 @@ export default async function Pipeline(
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">
-              Dropped and rejected pairs
+              {t("Dropped and rejected pairs")}
             </h2>
             <p className="mt-1 max-w-3xl text-xs text-ink-400">
-              For auditing false negatives while the thresholds are tuned — closest calls first.
-              Stage 1 and 2 drops stop being recorded with <code>SUGGEST_LOG_DROPS=0</code>.
+              {t("For auditing false negatives while the thresholds are tuned — closest calls first. Stage 1 and 2 drops stop being recorded with")}{" "}
+              <code>SUGGEST_LOG_DROPS=0</code>.
             </p>
           </div>
           {/* A segmented pill control, like the product views. */}
-          <nav className="inline-flex flex-wrap gap-1 rounded-xl bg-ink-50 p-1 text-xs dark:bg-ink-900" aria-label="Filter by stage">
-            {[{ href: "/admin/pipeline", label: "All", on: !stageFilter },
-              ...logCounts.map((c) => ({ href: `/admin/pipeline?stage=${c.stage}`, label: `${STAGE_LABEL[c.stage] ?? c.stage} · ${c.n}`, on: stageFilter === c.stage }))]
+          <nav className="inline-flex flex-wrap gap-1 rounded-xl bg-ink-50 p-1 text-xs dark:bg-ink-900" aria-label={t("Filter by stage")}>
+            {[{ href: "/admin/pipeline", label: t("All"), on: !stageFilter },
+              ...logCounts.map((c) => ({ href: `/admin/pipeline?stage=${c.stage}`, label: `${stageLabel(t, c.stage) ?? c.stage} · ${c.n}`, on: stageFilter === c.stage }))]
               .map((f) => (
                 <a key={f.href} href={f.href} aria-current={f.on ? "true" : undefined}
                   className={`rounded-lg px-3 py-1.5 tnum transition ${
@@ -172,11 +174,11 @@ export default async function Pipeline(
               ))}
           </nav>
         </div>
-        {log.length === 0 ? <Empty>Nothing dropped yet.</Empty> : (
-          <Table head={["Stage", "Hospital line", "Supplier product", "Similarity", "Jev", "Reason"]}>
+        {log.length === 0 ? <Empty>{t("Nothing dropped yet.")}</Empty> : (
+          <Table head={[t("Stage"), t("Hospital line"), t("Supplier product"), t("Similarity"), "Jev", t("Reason")]}>
             {log.map((r, i) => (
               <tr key={i}>
-                <td className="px-3 py-2 text-xs whitespace-nowrap">{STAGE_LABEL[r.stage ?? 0] ?? "—"}</td>
+                <td className="px-3 py-2 text-xs whitespace-nowrap">{stageLabel(t, r.stage) ?? "—"}</td>
                 <td className="max-w-[14rem] truncate px-3 py-2" title={r.itemName}>{r.itemName}</td>
                 <td className="max-w-[18rem] truncate px-3 py-2" title={r.productName}>{r.productName}</td>
                 <td className="px-3 py-2 tnum text-ink-400">{r.similarity?.toFixed(3) ?? "—"}</td>
@@ -191,9 +193,9 @@ export default async function Pipeline(
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">Run history</h2>
-        {runs.length === 0 ? <Empty>No runs recorded.</Empty> : (
-          <Table head={["Started", "Items", "Identifier", "Reranker", "Claude", "To review", "LLM calls", "Adapter"]}>
+        <h2 className="text-[1.02rem] font-bold text-ink-950 dark:text-white">{t("Run history")}</h2>
+        {runs.length === 0 ? <Empty>{t("No runs recorded.")}</Empty> : (
+          <Table head={[t("Started"), t("Items"), t("Identifier"), t("Reranker"), "Claude", t("To review"), t("LLM calls"), t("Adapter")]}>
             {runs.map((r) => (
               <tr key={r.id}>
                 <td className="px-3 py-2 text-xs text-ink-400">{new Date(r.started_at).toLocaleString("de-CH")}</td>
@@ -214,14 +216,16 @@ export default async function Pipeline(
 }
 
 /** What each stage let through, as a share of every possible pair. */
-function Funnel({ run }: { run: SuggestionRun }) {
+function Funnel({ run, t }: { run: SuggestionRun; t: Translate }) {
+  // API spend is in USD, as the providers bill it — a cost, not a price, so
+  // it is not converted to the reader's currency.
   const steps: [string, number, string][] = [
-    ["All pairs", run.pairsTotal, `${run.lines} lines × ${run.products} products`],
-    ["Rules", run.afterStage1, "category, codes, unit, dimensions"],
-    ["Retrieval", run.afterStage2, `top ${SUGGEST.topK} per line`],
-    ["Jev", run.afterStage3, `${run.jevCalls} calls · $${run.jevCost.toFixed(4)}`],
-    ["Matched", run.matched, `${run.claudeCalls} Claude calls`],
-    ["Analysed", run.analysed, `${run.analysisCalls} full analyses`],
+    [t("All pairs"), run.pairsTotal, t("{lines} lines × {products} products", { lines: run.lines, products: run.products })],
+    [t("Rules"), run.afterStage1, t("category, codes, unit, dimensions")],
+    [t("Retrieval"), run.afterStage2, t("top {k} per line", { k: SUGGEST.topK })],
+    ["Jev", run.afterStage3, t("{n} calls · ${cost}", { n: run.jevCalls, cost: run.jevCost.toFixed(4) })],
+    [t("Matched"), run.matched, t("{n} Claude calls", { n: run.claudeCalls })],
+    [t("Analysed"), run.analysed, t("{n} full analyses", { n: run.analysisCalls })],
   ];
   const max = Math.max(1, run.pairsTotal);
   return (
@@ -236,7 +240,7 @@ function Funnel({ run }: { run: SuggestionRun }) {
         </div>
       ))}
       <p className="pt-1 text-[11px] text-ink-400">
-        {run.reused} paid result{run.reused === 1 ? "" : "s"} reused from earlier runs or the file cache
+        {t(run.reused === 1 ? "{n} paid result reused from earlier runs or the file cache" : "{n} paid results reused from earlier runs or the file cache", { n: run.reused })}
         {run.adapters ? ` · ${run.adapters}` : ""}
       </p>
     </div>

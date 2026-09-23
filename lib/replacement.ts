@@ -14,6 +14,8 @@ import { baseUnits } from "./matching/recommend";
 import { savingsPct, tierAtVolume, tiersFor, poolState } from "./pooling";
 import { normaliseMdr, requiresClinicalReview } from "./matching/thresholds";
 import { createHash } from "node:crypto";
+import { UserError, msg, english, type Message } from "./i18n/user-error";
+import type { Vars } from "./i18n";
 import {
   analyseReplacement, type PriceFacts, type ReplacementContext, type ReplacementAnalysis,
 } from "./ai";
@@ -55,8 +57,7 @@ export function selectReplacement(itemId: string, canonicalId: string): SelectOu
   }
 
   if (existing && replacementOrderability(existing.id).order) {
-    throw new Error("This item's current replacement has already been ordered. Reject that order " +
-      "under Approvals before choosing another product.");
+    throw new Error("This item's current replacement has already been ordered. Reject that order under Approvals before choosing another product.");
   }
 
   const repId = id("rep");
@@ -392,6 +393,8 @@ export interface Orderability {
   canOrder: boolean;
   /** Why not, in the order a buyer would fix them. Empty when it can be ordered. */
   reasons: string[];
+  /** `reasons` as templates, index for index, for the page to show in the reader's language. */
+  reasonMessages: Message[];
   type: "identity" | "substitution";
   requiresClinical: boolean;
   supplierName: string | null;
@@ -439,25 +442,26 @@ export function replacementOrderability(replacementId: string): Orderability {
   const type = r.line_canonical === r.canonical_product_id ? "identity" : "substitution";
   const requiresClinical = requiresClinicalReview(type, normaliseMdr(r.mdr_risk_class));
   const volume = baseUnits(r.annual_volume ?? 0, r.extracted_pack_size ?? 1);
-  const reasons: string[] = [];
+  const reasonMessages: Message[] = [];
+  const because = (text: string, vars?: Vars) => { reasonMessages.push(msg(text, vars)); };
 
   const order = r.recommendation_id
     ? row<{ id: string; status: string }>(
         `SELECT id, status FROM orders WHERE recommendation_id = ? AND status != 'rejected'
          ORDER BY created_at DESC LIMIT 1`, r.recommendation_id) ?? null
     : null;
-  if (order) reasons.push("It has already been ordered.");
+  if (order) because("It has already been ordered.");
 
   const stale = r.analysis_status === "running" && r.analysis_started_at
     && Date.now() - new Date(r.analysis_started_at).getTime() > STALE_RUN_MS;
-  if (r.analysis_status === "failed" || stale) reasons.push("The match analysis failed — run it again first.");
-  else if (r.analysis_status !== "done") reasons.push("The match is still being calculated.");
+  if (r.analysis_status === "failed" || stale) because("The match analysis failed — run it again first.");
+  else if (r.analysis_status !== "done") because("The match is still being calculated.");
 
   const blocking = row<{ n: number }>(
     `SELECT COUNT(*) AS n FROM questions WHERE replacement_id = ? AND type = 'blocking'
        AND status IN ('open','answered')`, replacementId)!.n;
   if (blocking) {
-    reasons.push(`${blocking} blocking point${blocking === 1 ? "" : "s"} still need${blocking === 1 ? "s" : ""} signing off.`);
+    because(blocking === 1 ? "{n} blocking point still needs signing off." : "{n} blocking points still need signing off.", { n: blocking });
   }
 
   const tiers = r.manufacturer_id ? tiersFor(r.canonical_product_id, r.manufacturer_id) : [];
@@ -465,23 +469,33 @@ export function replacementOrderability(replacementId: string): Orderability {
     ? poolState(r.canonical_product_id, r.manufacturer_id, volume).currentTier ?? tierAtVolume(tiers, volume)
     : null;
   const currency = tier?.currency ?? r.line_currency ?? "CHF";
-  if (!tier) reasons.push(`${r.manufacturer_name ?? "The manufacturer"} has not published a price yet.`);
-  if (r.current_unit_price == null) reasons.push("Today's price for this item is unknown, so the order has no baseline.");
+  if (!tier) {
+    if (r.manufacturer_name) because("{manufacturer} has not published a price yet.", { manufacturer: r.manufacturer_name });
+    else because("The manufacturer has not published a price yet.");
+  }
+  if (r.current_unit_price == null) because("Today's price for this item is unknown, so the order has no baseline.");
   if (tier && r.current_unit_price != null
       && (!sameUnit(r.extracted_uom ?? "Stück", r.base_uom) || currency !== r.line_currency)) {
-    reasons.push(`Today's price is per ${r.extracted_uom ?? "Stück"} in ${r.line_currency}, the offer per ${r.base_uom} in ${currency} — settle the basis first.`);
+    because("Today's price is per {uom} in {currency}, the offer per {offerUom} in {offerCurrency} — settle the basis first.", {
+      uom: r.extracted_uom ?? "Stück", currency: r.line_currency, offerUom: r.base_uom, offerCurrency: currency,
+    });
   }
-  if (volume <= 0) reasons.push("The item has no annual volume to order.");
+  if (volume <= 0) because("The item has no annual volume to order.");
+  const reasons = reasonMessages.map(english);
 
   const baseline = r.current_unit_price;
   const unitPrice = tier?.unit_price ?? null;
   const priced = baseline != null && unitPrice != null;
   return {
-    canOrder: reasons.length === 0, reasons, type, requiresClinical,
+    // Plain objects only: this crosses into client components, and a SQLite
+    // row (null prototype) or a class instance cannot be serialised there.
+    canOrder: reasons.length === 0, reasons,
+    reasonMessages: reasonMessages.map((m) => (m.vars ? { text: m.text, vars: { ...m.vars } } : { text: m.text })),
+    type, requiresClinical,
     supplierName: r.manufacturer_name, currency, volume, unitPrice, baseline,
     savingsPct: priced ? savingsPct(baseline!, unitPrice!) : null,
     annualSavings: priced ? Math.round((baseline! - unitPrice!) * volume * 100) / 100 : null,
-    order,
+    order: order ? { id: order.id, status: order.status } : null,
   };
 }
 
@@ -496,7 +510,7 @@ export function replacementOrderability(replacementId: string): Orderability {
  */
 export function orderReplacement(replacementId: string): { orderId: string; status: string } {
   const check = replacementOrderability(replacementId);
-  if (!check.canOrder) throw new Error(check.reasons[0]);
+  if (!check.canOrder) throw UserError.of(check.reasonMessages[0]);
 
   const rep = row<{ hospital_item_id: string; canonical_product_id: string; recommendation_id: string | null;
                     summary: string | null; confidence: number | null; line_canonical: string | null;
