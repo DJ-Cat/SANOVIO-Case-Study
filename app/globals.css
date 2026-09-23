@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* Palette taken from sanovio.de (brand blue #5659FB and its grey scale). */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-50:  #eeeeff;
+  --color-brand-100: #cbccfe;
+  --color-brand-200: #b1b3fd;
+  --color-brand-300: #8e90fc;
+  --color-brand-400: #7173f4;
+  --color-brand-500: #5659fb;
+  --color-brand-600: #4e51e4;
+  --color-brand-700: #3d3fb2;
+  --color-brand-800: #0e10d6;
+
+  --color-ink-25:  #fafafa;
+  --color-ink-50:  #eeeef0;
+  --color-ink-100: #c9cacf;
+  --color-ink-200: #afb0b8;
+  --color-ink-300: #8a8c97;
+  --color-ink-400: #747683;
+  --color-ink-500: #515464;
+  --color-ink-600: #4a4c5b;
+  --color-ink-700: #3a3c47;
+  --color-ink-800: #2d2e37;
+  --color-ink-900: #22232a;
+  --color-ink-950: #0b0c0f;
+
+  --color-good-500: #229f39;
+  --color-good-100: #a8e6a3;
+}
+
+:root { color-scheme: light dark; }
+html, body { height: 100%; }
+body {
+  background: #fbfbfd;
+  color: var(--color-ink-900);
+  font-feature-settings: "tnum" 1;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #07080c; color: var(--color-ink-50); }
+}
+
+/* Surfaces sit slightly translucent so the point grid reads through the page
+   without ever competing with text. */
+.card {
+  @apply rounded-xl border border-ink-50 bg-white/85 shadow-sm backdrop-blur-sm;
+}
+@media (prefers-color-scheme: dark) {
+  .card { @apply border-ink-800 bg-ink-900/85; }
+}
+.tnum { font-variant-numeric: tabular-nums; }
+
+
+/* An upload reports no progress to bar against: the server action blocks until
+   extraction has finished, and a catalogue PDF is minutes of work behind a
+   single request. So the bar is indeterminate on purpose — a percentage here
+   would be the same kind of invention as a price nobody quoted. */
+@keyframes bar-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(350%); }
+}
+.bar-indeterminate {
+  @apply relative h-1.5 overflow-hidden rounded-full bg-ink-50;
+}
+.bar-indeterminate::after {
+  content: "";
+  @apply absolute inset-y-0 left-0 w-[28%] rounded-full bg-brand-500;
+  animation: bar-sweep 1.4s cubic-bezier(.65,.02,.36,1) infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .bar-indeterminate { @apply bg-ink-800; }
+}
+/* Motion off: keep a visible "working" state rather than a still bar that
+   reads as a stalled one. */
+@media (prefers-reduced-motion: reduce) {
+  .bar-indeterminate::after {
+    @apply w-full;
+    animation: none;
+    opacity: .45;
+  }
+}
+
+/* A conversation open on a phone has its own back arrow; the page's Back
+   above it would be a second one, and the height it takes is the thread's. */
+@media (max-width: 767px) {
+  main:has([data-thread-open]) [data-portal-back] { display: none; }
+}

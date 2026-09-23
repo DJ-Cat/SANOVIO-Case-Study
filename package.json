@@ -1,0 +1,37 @@
+{
+  "name": "sanovio-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:reset": "tsx scripts/seed.ts",
+    "postinstall": "tsx scripts/seed.ts",
+    "verify": "SANOVIO_DB=db/verify.db tsx scripts/seed.ts && SANOVIO_DB=db/verify.db SUGGEST_CACHE=off tsx scripts/verify.ts",
+    "check:extract": "tsx scripts/check-extract-schema.ts",
+    "demo:load": "tsx scripts/load-fixture.ts",
+    "demo:export": "tsx scripts/export-fixture.ts",
+    "suggest": "tsx scripts/suggest.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
+    "next": "^15.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

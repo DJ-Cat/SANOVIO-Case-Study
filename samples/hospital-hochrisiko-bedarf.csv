@@ -1,0 +1,4 @@
+internal_id;Artikelbezeichnung;Marke;Artikelnummer;Jahresmenge;Bestellmengeneinheit;Basismengeneinheiten pro BME;Basismengeneinheit;GTIN;MDR-Klasse;Netto-Zielpreis;Währung;Lieferant
+R-01;Infusionspumpen-Überleitgerät PVC-frei Luer-Lock;B. Braun;8700036SP;14000;Stk;1;Stück;04040456870003;IIb;4.20;CHF;Medifach Handels AG
+R-02;Hüftpfannen-Implantat Titan 52 mm zementfrei;Medtronic;HIP-52-TI;180;Stk;1;Stück;05010023987654;III;890.00;CHF;Medifach Handels AG
+R-03;Beatmungsschlauchsystem Erwachsene steril;Medtronic;VENT-AD-22;6200;Stk;1;Stück;05010023445566;IIb;7.40;CHF;Medifach Handels AG

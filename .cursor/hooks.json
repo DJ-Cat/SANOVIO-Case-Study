@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "[ ! -f '/Users/quintenmajica/.cursor/skills/impeccable/scripts/impeccable' ] || '/Users/quintenmajica/.cursor/skills/impeccable/scripts/impeccable' hook-before-edit",
+        "timeout": 5
+      }
+    ]
+  }
+}
