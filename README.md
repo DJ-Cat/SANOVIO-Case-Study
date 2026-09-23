@@ -181,12 +181,6 @@ Spreadsheets are parsed in-process by `lib/ingest/` with no dependencies — a m
 `.xlsx`, an RFC4180 reader for `.csv`. **Catalogue PDFs go to `extract_lib`** (see below), which is
 where the row counts above now come from.
 
-**One finding worth calling out.** Hospital row 6 is `Kanüle Sterican 0,8 × 40 mm`, article
-`4657689`. B. Braun's actual article number for *Sterican® 21Gx1½" (0,80 mm × 40 mm)* is `4657527B`.
-The article numbers **do not match**; the descriptions do. Identifier matching fails and the
-semantic layers carry it — that single row is the harmonisation problem in miniature, and
-`npm run verify` asserts on it by name.
-
 A row's confidence comes from what the run established, never from a model self-report. Every part
 number is validated back against the page's text layer, the page re-run once with the failures fed
 back, and rows that still cannot be anchored are dropped rather than guessed at — so a row that
