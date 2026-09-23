@@ -143,32 +143,6 @@ cursor's radius shaded individually, so cost does not grow with viewport or dens
 
 ---
 
-## What it does
-
-SANOVIO is a **virtual procurement group**. Three mechanics stack, and each is a layer in the app:
-
-1. **Harmonisation** — messy hospital article masters and supplier catalogues resolve to one
-   `CanonicalProduct`. Without this, nothing else is possible.
-2. **Pooling** — once two hospitals provably buy the same thing, their volume bundles into one
-   negotiating position. Price is a function of the *pool*, not of one hospital's order. The
-   mechanic is real and priced; it is simply not exposed in either portal (see above). A pool holds
-   only volume an approved order put there — nothing is pre-filled, so until a second hospital
-   orders, a pool is one hospital's volume and prices exactly as that.
-3. **Direct sourcing** — pooled volume is placed with the original manufacturer, removing the
-   distributor margin. SANOVIO is principal, so orders carry a `sanovio_fulfillment_ref`, never a
-   supplier reference.
-
-The saving is mostly **channel**, not **substitution** — the same article bought better — which is
-why the app separates those two cases everywhere.
-
-| | Identity match | Substitution match |
-|---|---|---|
-| Claim | Same article, better channel | Different article, clinically equivalent |
-| Clinical risk | **None** | Real |
-| Gate | Budget approval only | Budget approval **+** clinical sign-off at MDR IIb/III |
-
----
-
 ## The pipeline (§8)
 
 Cheapest layer first. Each layer only sees what the one above could not resolve.
